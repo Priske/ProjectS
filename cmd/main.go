@@ -8,19 +8,11 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
-const (
-	cellSize = 64
-	boardW   = 10
-	boardH   = 10
-	screenW  = boardW * cellSize
-	screenH  = boardH * cellSize
-)
-
 func main() {
-	ebiten.SetWindowSize(screenW, screenH)
-	ebiten.SetWindowTitle("ProjectS")
 
-	if err := ebiten.RunGame(game.NewGame()); err != nil {
+	g := game.NewGame()
+	if err := ebiten.RunGame(g); err != nil {
 		log.Fatal(err)
 	}
+
 }

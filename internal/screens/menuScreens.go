@@ -6,63 +6,46 @@ import (
 	"github.com/Priske/ProjectS/internal/core"
 	GUI "github.com/Priske/ProjectS/internal/guiAssets"
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
 
 type MenuScreen struct {
-	buttons []GUI.Button
+	widgets []core.Widget
 }
 
-func NewMenuScreen() MenuScreen {
+func NewMenuScreen(g core.Game) MenuScreen {
+
 	ms := MenuScreen{}
 
-	ms.buttons = []GUI.Button{
-		{
-			X: 220, Y: 160, W: 200, H: 50,
-			Text: "Play",
-			OnClick: func() {
-				// We'll set this later via g.SetScreen(...)
-				// can't access g here yet, so we handle in Update with closures that capture g
-			},
-		},
+	w := core.MenuButtonW // 200
+	h := core.MenuButtonH // 50
+	spacing := 20
+
+	totalH := 3*h + 2*spacing
+	startY := (core.VirtualH - totalH) / 2
+	x := (core.VirtualW - w) / 2
+	ms.widgets = []core.Widget{
+		GUI.MakeButton(x, startY, w, h, "Play", func() { g.SetScreen(NewPlayScreen(g)) }),
+		GUI.MakeButton(x, startY+(h+spacing), w, h, "Settings", func() { g.SetScreen(NewSetupScreen()) }),
+		GUI.MakeButton(x, startY+2*(h+spacing), w, h, "Exit", func() {}),
 	}
 
 	return ms
 }
 
 func (ms MenuScreen) Update(g core.Game) error {
-	if g.JustClickedLeft() {
-		mx, my := ebiten.CursorPosition()
-		for _, b := range ms.buttons {
-			if b.Contains(mx, my) {
-				// act based on which button
-				switch b.Text {
-				case "Play":
-					g.SetScreen(NewSetupScreen()) // you create this next
-				}
-				break
-			}
-		}
+	input := g.Input()
+	for _, w := range ms.widgets {
+		w.Update(input)
 	}
+
 	return nil
 }
 
 func (ms MenuScreen) Draw(g core.Game, screen *ebiten.Image) {
 	screen.Fill(color.RGBA{18, 18, 22, 255})
 
-	ebitenutil.DebugPrintAt(screen, "ProjectS", 280, 80)
+	for _, b := range ms.widgets {
+		b.Draw(screen)
 
-	// draw buttons
-	mx, my := ebiten.CursorPosition()
-	for _, b := range ms.buttons {
-		hover := b.Contains(mx, my)
-
-		col := color.RGBA{80, 80, 95, 255}
-		if hover {
-			col = color.RGBA{110, 110, 130, 255}
-		}
-
-		ebitenutil.DrawRect(screen, float64(b.X), float64(b.Y), float64(b.W), float64(b.H), col)
-		ebitenutil.DebugPrintAt(screen, b.Text, b.X+20, b.Y+18)
 	}
 }
