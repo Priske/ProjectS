@@ -10,6 +10,7 @@ type Game interface {
 	Input() Input
 	Board() GameBoard
 	Assets() Assets
+	Players() []*Player
 
 	//MakeBoard() //
 }

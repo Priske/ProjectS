@@ -2,10 +2,11 @@ package core
 
 type Unit struct {
 	Type       UnitType
-	health     int
-	attack     int
-	experience int
-	playerid   int
+	UnitId     int
+	Health     int
+	Attack     int
+	Experience int
+	Playerid   int
 }
 
 type UnitType int
