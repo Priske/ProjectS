@@ -54,6 +54,31 @@ func MakeBoard(boardH, boardW int) core.GameBoard {
 		LocationXY: board,
 	}
 }
+func PlacePlayersFormation(g *Game) {
+	player := g.players[0]
+	used := make(map[int]bool)
+
+	units := player.Units
+	form := player.Formations[0]
+
+	for pos, wantType := range form.Wants {
+		// IMPORTANT: board is [y][x]
+		tile := &g.board.LocationXY[pos.Y][pos.X]
+
+		// place only if empty
+		if tile.Unit != nil {
+			continue
+		}
+
+		for _, u := range units {
+			if u.Type == wantType && !used[u.UnitId] {
+				tile.Unit = u
+				used[u.UnitId] = true
+				break
+			}
+		}
+	}
+}
 
 func (g *Game) Settings() core.Settings {
 	return g.settings
@@ -76,6 +101,8 @@ func NewGame() *Game {
 	//g.board.LocationXY[1][2].Unit = &core.Unit{Type: core.Commander}
 	p := makeTestPlayer()
 	g.players = append(g.players, &p)
+	PlacePlayersFormation(g)
+
 	ebiten.SetWindowSize(core.VirtualW, core.VirtualH)
 	ebiten.SetWindowTitle("ProjectS")
 	ebiten.SetWindowResizable(true)
@@ -143,7 +170,7 @@ func (g *Game) pollInput() core.Input {
 
 func makeTestFormation() core.Formation {
 	p1 := core.Pos{X: 2, Y: 2}
-	p2 := core.Pos{X: 3, Y: 2}
+	p2 := core.Pos{X: 0, Y: 0}
 	p3 := core.Pos{X: 1, Y: 2}
 	wants := make(map[core.Pos]core.UnitType)
 	wants[p1] = core.Soldier
@@ -169,7 +196,7 @@ func makeTestPlayer() core.Player {
 		Playerid:   007,
 	}
 	u2 := core.Unit{
-		Type:       core.Soldier,
+		Type:       core.Commander,
 		UnitId:     2,
 		Health:     1,
 		Attack:     1,

@@ -24,14 +24,17 @@ func NewPlayScreen(g core.Game) *PlayScreen {
 	x := 20
 	y := 40
 
-	options := GUI.MakeCollapsible(x, y, panelW, headerH, "Options . . .", []core.Widget{
-		GUI.MakeButton(0, 0, 240, 50, "Place Unit", func() {
-			players := g.Players()
-			for _, p := range players {
-
-			}
-		}),
-	})
+	//Testing Out GridField
+	grid := GUI.MakeGridField(x, y, 5, 5, 48)
+	grid.ShowGrid = true
+	btnTest := GUI.MakeButton(0, 0, 240, 50, "Formations . . .", func() {})
+	formation := GUI.MakeCollapsible(0, 0, 240, 50, "Formations . . . ", []core.Widget{})
+	placeUnit := GUI.MakeCollapsible(0, 0, 240, 50, "Place Unit . . .", []core.Widget{})
+	widgetsSidebar := []core.Widget{}
+	widgets := []core.Widget{}
+	widgets = append(widgets, btnTest, &grid)
+	widgetsSidebar = append(widgetsSidebar, placeUnit, formation)
+	options := GUI.MakeCollapsible(x, y, panelW, headerH, "Options . . .", widgetsSidebar)
 
 	ps.widgets = []core.Widget{options}
 	return ps
