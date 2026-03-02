@@ -15,3 +15,24 @@ const (
 	Soldier UnitType = iota
 	Commander
 )
+
+func MakeNewSoldier(playerId, unitId int) *Unit {
+	return &Unit{
+		Type:       Soldier,
+		UnitId:     unitId,
+		Health:     1,
+		Attack:     1,
+		Experience: 0,
+		Playerid:   playerId,
+	}
+}
+func MakeNewCommander(playerId, unitId int) *Unit {
+	return &Unit{
+		Type:       Commander,
+		UnitId:     unitId,
+		Health:     1,
+		Attack:     1,
+		Experience: 0,
+		Playerid:   playerId,
+	}
+}

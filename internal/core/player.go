@@ -6,3 +6,12 @@ type Player struct {
 	Units      []*Unit
 	Formations []Formation
 }
+
+func NewPlayer(id int, name string) *Player {
+	return &Player{
+		Playerid:   id,
+		Name:       name,
+		Units:      make([]*Unit, 0, 40),
+		Formations: []Formation{},
+	}
+}

@@ -1,6 +1,8 @@
 package game
 
 import (
+	"fmt"
+
 	"github.com/Priske/ProjectS/assets"
 	"github.com/Priske/ProjectS/internal/core"
 	"github.com/Priske/ProjectS/internal/screens"
@@ -19,13 +21,16 @@ const (
 )
 
 type Game struct {
-	settings core.Settings
-	phase    Phase
-	screen   core.Screen
-	board    core.GameBoard
-	input    core.Input
-	assets   core.Assets
-	players  []*core.Player
+	nextUnitID int //nextUnitID Added, To keep track of adding unit id's remove and replace when DB is added with UUID's
+	settings   core.Settings
+	phase      Phase
+	screen     core.Screen
+	board      core.GameBoard
+	input      core.Input
+	assets     core.Assets
+	players    []*core.Player //all players in a given game
+	localSlot  int            // who is logged in on this machine
+	turnSlot   int            // whose turn it is in the match
 
 	mouseWasDown bool // simple click edge-detect
 }
@@ -80,28 +85,21 @@ func PlacePlayersFormation(g *Game) {
 	}
 }
 
-func (g *Game) Settings() core.Settings {
-	return g.settings
-}
-func (g *Game) Board() core.GameBoard {
-	return g.board
-}
-func (g *Game) Assets() core.Assets {
-	return g.assets
-}
-
 // innit currently in update Phases
 func NewGame() *Game {
-	g := &Game{}
+	g := &Game{
+		players: []*core.Player{
+			core.NewPlayer(0, "P1"),
+			core.NewPlayer(1, "P2"),
+		},
+		localSlot: 0,
+		turnSlot:  0,
+	}
+
 	g.SetScreen(screens.NewMenuScreen(g))
 	g.settings = core.DefaultSettings()
-	g.board = MakeBoard(g.settings.BoardH, g.settings.BoardW)
+
 	g.assets = assets.MustLoadAll()
-	//g.board.LocationXY[0][0].Unit = &core.Unit{Type: core.Soldier}
-	//g.board.LocationXY[1][2].Unit = &core.Unit{Type: core.Commander}
-	p := makeTestPlayer()
-	g.players = append(g.players, &p)
-	PlacePlayersFormation(g)
 
 	ebiten.SetWindowSize(core.VirtualW, core.VirtualH)
 	ebiten.SetWindowTitle("ProjectS")
@@ -112,8 +110,9 @@ func NewGame() *Game {
 func (g *Game) SetScreen(s core.Screen) {
 	g.screen = s
 }
-func (g *Game) Players() []*core.Player {
-	return g.players
+func (g *Game) SetLocalPlayer(*core.Player) {
+	g.LocalPlayer()
+
 }
 
 func (g *Game) Update() error {
@@ -149,9 +148,6 @@ func (g *Game) Layout(outsideW, outsideH int) (int, int) {
 	return core.VirtualW, core.VirtualH
 }
 
-func (g *Game) Input() core.Input {
-	return g.input
-}
 func (g *Game) pollInput() core.Input {
 	mx, my := ebiten.CursorPosition()
 
@@ -168,64 +164,37 @@ func (g *Game) pollInput() core.Input {
 	return in
 }
 
-func makeTestFormation() core.Formation {
-	p1 := core.Pos{X: 2, Y: 2}
-	p2 := core.Pos{X: 0, Y: 0}
-	p3 := core.Pos{X: 1, Y: 2}
-	wants := make(map[core.Pos]core.UnitType)
-	wants[p1] = core.Soldier
-	wants[p2] = core.Commander
-	wants[p3] = core.Soldier
+// / Remove When UUID is added Temp Solution
+func (g *Game) NewUnitID() int {
+	g.nextUnitID++
+	return g.nextUnitID
+}
+func (g *Game) InitializeNewGame(localPlayerID int) {
+	// Fresh match state
+	g.players = make([]*core.Player, 0, 2)
+	g.board = MakeBoard(g.settings.BoardH, g.settings.BoardW)
+	// Local player
+	local := &core.Player{Playerid: localPlayerID}
+	local.Units = g.InitializeStartingUnits(localPlayerID)
 
-	formationA := core.Formation{
-		Name:  "Test1",
-		GridW: 5,
-		GridH: 5,
-		Wants: wants,
-	}
-	return formationA
+	// Opponent (bot/placeholder for now)
+	opponentID := -1
+	opponent := &core.Player{Playerid: opponentID}
+	opponent.Units = g.InitializeStartingUnits(opponentID)
+
+	g.players = append(g.players, local, opponent)
+
+	// Session state
+	g.localSlot = 0
+	g.turnSlot = 0
+
+	fmt.Printf("players made: local=%d opponent=%d\n", local.Playerid, opponent.Playerid)
 }
 
-func makeTestPlayer() core.Player {
-	u1 := core.Unit{
-		Type:       core.Soldier,
-		UnitId:     1,
-		Health:     1,
-		Attack:     1,
-		Experience: 0,
-		Playerid:   007,
-	}
-	u2 := core.Unit{
-		Type:       core.Commander,
-		UnitId:     2,
-		Health:     1,
-		Attack:     1,
-		Experience: 0,
-		Playerid:   007,
-	}
-	u3 := core.Unit{
-		Type:       core.Soldier,
-		UnitId:     3,
-		Health:     1,
-		Attack:     1,
-		Experience: 0,
-		Playerid:   007,
-	}
-	units := make([]*core.Unit, 3)
-	units[0] = &u1
-	units[1] = &u2
-	units[2] = &u3
-	formations := make([]core.Formation, 1)
-	formations[0] = makeTestFormation()
-	return core.Player{
-		Playerid:   007,
-		Name:       "Bond James",
-		Units:      units,
-		Formations: formations,
+func (g *Game) InitializeStartingUnits(playerId int) []*core.Unit {
+	return []*core.Unit{
+		core.MakeNewSoldier(playerId, g.NewUnitID()),
+		core.MakeNewSoldier(playerId, g.NewUnitID()),
+		core.MakeNewCommander(playerId, g.NewUnitID()),
 	}
 }
-
-/*
-
-
- */

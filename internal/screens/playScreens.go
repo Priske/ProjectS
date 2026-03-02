@@ -15,33 +15,17 @@ type PlayScreen struct {
 	widgets  []core.Widget
 	drag     interaction.DragState
 	lastDrop string
+	modal    *GUI.Modal
 }
 
-func NewPlayScreen(g core.Game) *PlayScreen {
-	ps := &PlayScreen{}
-	panelW := 260
-	headerH := 44
-	x := 20
-	y := 40
-
-	//Testing Out GridField
-	grid := GUI.MakeGridField(x, y, 5, 5, 48)
-	grid.ShowGrid = true
-	btnTest := GUI.MakeButton(0, 0, 240, 50, "Formations . . .", func() {})
-	formation := GUI.MakeCollapsible(0, 0, 240, 50, "Formations . . . ", []core.Widget{})
-	placeUnit := GUI.MakeCollapsible(0, 0, 240, 50, "Place Unit . . .", []core.Widget{})
-	widgetsSidebar := []core.Widget{}
-	widgets := []core.Widget{}
-	widgets = append(widgets, btnTest, &grid)
-	widgetsSidebar = append(widgetsSidebar, placeUnit, formation)
-	options := GUI.MakeCollapsible(x, y, panelW, headerH, "Options . . .", widgetsSidebar)
-
-	ps.widgets = []core.Widget{options}
-	return ps
-
-}
 func (ps *PlayScreen) Update(g core.Game) error {
 	input := g.Input()
+	// If modal open: update only it (and return)
+	//Testing Modal
+	if ps.modal != nil && ps.modal.Open {
+		ps.modal.Update(input)
+		return nil
+	}
 
 	for _, w := range ps.widgets {
 		w.Update(input)
@@ -93,6 +77,9 @@ func (ps *PlayScreen) Draw(g core.Game, screen *ebiten.Image) {
 	ps.drawDraggedUnit(g, screen) // draws on top
 	ps.drawUI(screen)
 	ps.drawDebug(screen)
+	if ps.modal != nil && ps.modal.Open {
+		ps.modal.Draw(screen)
+	}
 
 }
 

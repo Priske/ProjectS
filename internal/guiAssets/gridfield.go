@@ -25,8 +25,8 @@ type GridField struct {
 	DrawCell    func(dst *ebiten.Image, cx, cy int, x, y, size int, payload any)
 }
 
-func MakeGridField(x, y, cols, rows, cell int) GridField {
-	return GridField{
+func MakeGridField(x, y, cols, rows, cell int) *GridField {
+	return &GridField{
 		X:    x,
 		Y:    y,
 		Rows: rows,

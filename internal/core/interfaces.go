@@ -11,6 +11,7 @@ type Game interface {
 	Board() GameBoard
 	Assets() Assets
 	Players() []*Player
+	InitializeNewGame(playerId int)
 
 	//MakeBoard() //
 }

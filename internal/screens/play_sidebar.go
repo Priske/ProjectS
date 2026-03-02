@@ -1,0 +1,22 @@
+package screens
+
+import (
+	"github.com/Priske/ProjectS/internal/core"
+	GUI "github.com/Priske/ProjectS/internal/guiAssets"
+)
+
+func (ps *PlayScreen) makeOptionsSidebar(g core.Game) core.Widget {
+	panelW := 260
+	headerH := 44
+	x := 20
+	y := 40
+
+	placeUnit := ps.makePlaceUnitSection(g)
+	formation := ps.makeFormationSection(g)
+	exit := GUI.MakeButton(0, 0, 240, 50, "Save & Quit", func() {
+		g.SetScreen(NewMenuScreen(g))
+	})
+
+	widgetsSidebar := []core.Widget{placeUnit, formation, exit}
+	return GUI.MakeCollapsible(x, y, panelW, headerH, "Options . . .", widgetsSidebar)
+}

@@ -9,13 +9,13 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
-type MenuScreen struct {
+type SelecScreen struct {
 	widgets []core.Widget
 }
 
-func NewMenuScreen(g core.Game) MenuScreen {
+func NewSelectScreen(g core.Game) SelecScreen {
 
-	ms := MenuScreen{}
+	ss := SelecScreen{}
 
 	w := core.MenuButtonW // 200
 	h := core.MenuButtonH // 50
@@ -24,16 +24,21 @@ func NewMenuScreen(g core.Game) MenuScreen {
 	totalH := 3*h + 2*spacing
 	startY := (core.VirtualH - totalH) / 2
 	x := (core.VirtualW - w) / 2
-	ms.widgets = []core.Widget{
-		GUI.MakeButton(x, startY, w, h, "Play", func() { g.SetScreen(NewSelectScreen(g)) }),
-		GUI.MakeButton(x, startY+(h+spacing), w, h, "Settings", func() { g.SetScreen(NewSetupScreen()) }),
-		GUI.MakeButton(x, startY+2*(h+spacing), w, h, "Exit", func() { os.Exit(0) }),
+
+	ss.widgets = []core.Widget{
+		GUI.MakeButton(x, startY, w, h, "New Game", func() {
+			g.InitializeNewGame(1)
+			g.SetScreen(NewPlayScreen(g))
+
+		}),
+		GUI.MakeButton(x, startY+(h+spacing), w, h, "Load", func() { g.SetScreen(NewSetupScreen()) }),
+		GUI.MakeButton(x, startY+2*(h+spacing), w, h, "return to main menu", func() { os.Exit(0) }),
 	}
 
-	return ms
+	return ss
 }
 
-func (ms MenuScreen) Update(g core.Game) error {
+func (ms SelecScreen) Update(g core.Game) error {
 	input := g.Input()
 	for _, w := range ms.widgets {
 		w.Update(input)
@@ -42,7 +47,7 @@ func (ms MenuScreen) Update(g core.Game) error {
 	return nil
 }
 
-func (ms MenuScreen) Draw(g core.Game, screen *ebiten.Image) {
+func (ms SelecScreen) Draw(g core.Game, screen *ebiten.Image) {
 	screen.Fill(color.RGBA{18, 18, 22, 255})
 
 	for _, b := range ms.widgets {

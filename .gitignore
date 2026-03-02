@@ -31,3 +31,4 @@ go.work.sum
 # .idea/
 # .vscode/
 /examples
+/internal/game/testing_temp_functions_misc.go

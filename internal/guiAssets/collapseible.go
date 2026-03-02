@@ -32,17 +32,18 @@ func MakeCollapsible(x, y, w, h int, title string, children []core.Widget) core.
 }
 
 func (c *Collapsible) Bounds() (int, int, int, int) {
-	// Bounds represents the HEADER only for hit-testing.
-	return c.X, c.Y, c.W, c.H
+	return c.X, c.Y, c.W, c.TotalHeight()
 }
-
 func (c *Collapsible) SetPos(x, y int) { // optional, but useful if parent wants to move it
 	c.X = x
 	c.Y = y
 }
+func (c *Collapsible) headerHit(mx, my int) bool {
+	return mx >= c.X && mx < c.X+c.W && my >= c.Y && my < c.Y+c.H
+}
 
 func (c *Collapsible) Update(in core.Input) {
-	c.Hovered = core.PointInBounds(in.MX, in.MY, c)
+	c.Hovered = c.headerHit(in.MX, in.MY)
 
 	if in.LeftClicked && c.Hovered {
 		c.Open = !c.Open
