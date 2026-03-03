@@ -2,7 +2,7 @@ package interaction
 
 type DragState struct {
 	Active bool
-
+	Source DragSource
 	// Where the drag started (optional but useful for boards)
 	FromX, FromY int
 
@@ -31,3 +31,10 @@ func (d *DragState) UpdateMouse(mx, my int) {
 func (d *DragState) End() {
 	*d = DragState{}
 }
+
+type DragSource uint8
+
+const (
+	DragFromBoard DragSource = iota
+	DragFromGrid
+)

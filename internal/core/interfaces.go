@@ -12,6 +12,9 @@ type Game interface {
 	Assets() Assets
 	Players() []*Player
 	InitializeNewGame(playerId int)
+	LocalPlayer() *Player
+	TurnPlayer() *Player
+	NextTurn()
 
 	//MakeBoard() //
 }

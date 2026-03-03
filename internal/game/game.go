@@ -11,15 +11,6 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
-type Phase int
-
-const (
-	PhaseMenu Phase = iota
-	PhaseSetup
-	PhasePlaying
-	PhaseGameOver
-)
-
 type Game struct {
 	nextUnitID int //nextUnitID Added, To keep track of adding unit id's remove and replace when DB is added with UUID's
 	settings   core.Settings
@@ -56,7 +47,7 @@ func MakeBoard(boardH, boardW int) core.GameBoard {
 	}
 
 	return core.GameBoard{
-		LocationXY: board,
+		Location: board,
 	}
 }
 func PlacePlayersFormation(g *Game) {
@@ -68,7 +59,7 @@ func PlacePlayersFormation(g *Game) {
 
 	for pos, wantType := range form.Wants {
 		// IMPORTANT: board is [y][x]
-		tile := &g.board.LocationXY[pos.Y][pos.X]
+		tile := g.board.TilePtr(pos.X, pos.Y)
 
 		// place only if empty
 		if tile.Unit != nil {
@@ -117,30 +108,17 @@ func (g *Game) SetLocalPlayer(*core.Player) {
 
 func (g *Game) Update() error {
 	g.input = g.pollInput()
-	switch g.phase {
-	case PhaseMenu:
-		return g.updateMenu()
-	case PhaseSetup:
-		return g.updateSetup()
-	case PhasePlaying:
-		return g.updatePlaying()
-	case PhaseGameOver:
-		return g.updateGameOver()
-	default:
+	if g.screen == nil {
 		return nil
 	}
+	return g.screen.Update(g)
 }
+
 func (g *Game) Draw(screen *ebiten.Image) {
-	switch g.phase {
-	case PhaseMenu:
-		g.drawMenu(screen)
-	case PhaseSetup:
-		g.drawSetup(screen)
-	case PhasePlaying:
-		g.drawPlaying(screen)
-	case PhaseGameOver:
-		g.drawGameOver(screen)
+	if g.screen == nil {
+		return
 	}
+	g.screen.Draw(g, screen)
 }
 
 func (g *Game) Layout(outsideW, outsideH int) (int, int) {
@@ -170,6 +148,7 @@ func (g *Game) NewUnitID() int {
 	return g.nextUnitID
 }
 func (g *Game) InitializeNewGame(localPlayerID int) {
+	g.settings = core.DefaultSettings()
 	// Fresh match state
 	g.players = make([]*core.Player, 0, 2)
 	g.board = MakeBoard(g.settings.BoardH, g.settings.BoardW)
@@ -187,7 +166,7 @@ func (g *Game) InitializeNewGame(localPlayerID int) {
 	// Session state
 	g.localSlot = 0
 	g.turnSlot = 0
-
+	g.SetPhase(PhaseMenu)
 	fmt.Printf("players made: local=%d opponent=%d\n", local.Playerid, opponent.Playerid)
 }
 

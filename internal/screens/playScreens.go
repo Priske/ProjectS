@@ -12,14 +12,20 @@ import (
 )
 
 type PlayScreen struct {
-	widgets  []core.Widget
-	drag     interaction.DragState
-	lastDrop string
-	modal    *GUI.Modal
+	widgets       []core.Widget
+	drag          interaction.DragState
+	lastDrop      string
+	modal         *GUI.Modal
+	unPlacedUnits []*core.Unit
+	readyAdded    bool
 }
 
 func (ps *PlayScreen) Update(g core.Game) error {
 	input := g.Input()
+	if len(ps.unPlacedUnits) == 0 && !ps.readyAdded {
+		ps.widgets = append(ps.widgets, ps.makeRightSidebar(g))
+		ps.readyAdded = true
+	}
 	// If modal open: update only it (and return)
 	//Testing Modal
 	if ps.modal != nil && ps.modal.Open {
@@ -41,7 +47,7 @@ func (ps *PlayScreen) Update(g core.Game) error {
 	if !ps.drag.Active && input.LeftClicked && !ps.clickHitsWidget(input.MX, input.MY) {
 		cx, cy, ok := ps.mouseToCell(g, input.MX, input.MY)
 		if ok {
-			tile := g.Board().LocationXY[cy][cx]
+			tile := g.Board().Location[cy][cx]
 			if tile.Unit != nil {
 				px, py := ps.cellTopLeft(g, cx, cy)
 
@@ -107,43 +113,55 @@ func (ps *PlayScreen) cellTopLeft(g core.Game, cx, cy int) (px, py int) {
 	return offX + cx*s.CellSize, offY + cy*s.CellSize
 }
 
-func (ps *PlayScreen) handleDrop(g core.Game, mx, my int) (committed bool, reason string) {
+func (ps *PlayScreen) handleDrop(g core.Game, mx, my int) (bool, string) {
+	defer func() { ps.drag.Active = false }()
+
 	toX, toY, ok := ps.mouseToCell(g, mx, my)
 	if !ok {
-		ps.drag.Active = false
 		return false, "drop off board"
 	}
 
-	fromX, fromY := ps.drag.FromX, ps.drag.FromY
-	if toX == fromX && toY == fromY {
-		ps.drag.Active = false
-		return false, "same cell"
+	board := g.Board()
+	dst := board.TilePtr(toX, toY) // <- prefer your new accessor
+	if dst == nil {
+		return false, "drop off board"
 	}
-
-	dst := g.Board().LocationXY[toY][toX]
 	if dst.Unit != nil {
-		ps.drag.Active = false
 		return false, "dst occupied"
 	}
 
-	dx := toX - fromX
-	if dx < 0 {
-		dx = -dx
+	// ---- DRAG FROM GRID (placement)
+	if ps.drag.Source == interaction.DragFromGrid {
+		u, ok := ps.drag.Payload.(*core.Unit)
+		if !ok || u == nil {
+			return false, "invalid payload"
+		}
+
+		dst.Unit = u
+		ps.unPlacedUnits = removeByID(ps.unPlacedUnits, u.UnitId)
+		return true, "placed"
 	}
-	dy := toY - fromY
-	if dy < 0 {
-		dy = -dy
+
+	// ---- DRAG FROM BOARD (movement)
+	fromX, fromY := ps.drag.FromX, ps.drag.FromY
+	if toX == fromX && toY == fromY {
+		return false, "same cell"
 	}
+
+	dx := abs(toX - fromX)
+	dy := abs(toY - fromY)
 	if dx+dy != 1 {
-		ps.drag.Active = false
-		return false, "illegal move (dx+dy != 1)"
+		return false, "illegal move"
 	}
 
-	board := g.Board()
+	// mutate via pointers to avoid tile-copy bugs
+	src := board.TilePtr(fromX, fromY)
+	if src == nil || src.Unit == nil {
+		return false, "no src unit"
+	}
 
-	board.LocationXY[toY][toX].Unit = board.LocationXY[fromY][fromX].Unit
-	board.LocationXY[fromY][fromX].Unit = nil
-	ps.drag.Active = false
+	dst.Unit = src.Unit
+	src.Unit = nil
 	return true, "moved"
 }
 
@@ -192,7 +210,7 @@ func (ps *PlayScreen) drawUnits(g core.Game, screen *ebiten.Image) {
 			if ps.drag.Active && x == ps.drag.FromX && y == ps.drag.FromY {
 				continue
 			}
-			tile := g.Board().LocationXY[y][x]
+			tile := g.Board().Location[y][x]
 			if tile.Unit == nil {
 				continue
 			}

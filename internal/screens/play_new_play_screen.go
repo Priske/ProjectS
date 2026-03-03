@@ -7,8 +7,12 @@ import (
 func NewPlayScreen(g core.Game) *PlayScreen {
 	ps := &PlayScreen{}
 
-	options := ps.makeOptionsSidebar(g)
+	if localPlayer := g.LocalPlayer(); localPlayer != nil {
+		ps.unPlacedUnits = make([]*core.Unit, len(localPlayer.Units))
+		copy(ps.unPlacedUnits, localPlayer.Units)
+	}
 
+	options := ps.makeOptionsSidebar(g)
 	ps.widgets = []core.Widget{options}
 	return ps
 }
