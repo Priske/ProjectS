@@ -51,7 +51,7 @@ func MakeBoard(boardH, boardW int) core.GameBoard {
 	}
 }
 func PlacePlayersFormation(g *Game) {
-	player := g.players[0]
+	player := g.LocalPlayer()
 	used := make(map[int]bool)
 
 	units := player.Units

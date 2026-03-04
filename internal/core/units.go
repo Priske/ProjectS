@@ -12,8 +12,17 @@ type Unit struct {
 type UnitType int
 
 const (
-	Soldier UnitType = iota
+	UnitNone UnitType = iota
+	Soldier
 	Commander
+)
+
+type UnitCategory int
+
+const (
+	Attack UnitCategory = iota
+	Defense
+	Support
 )
 
 func MakeNewSoldier(playerId, unitId int) *Unit {

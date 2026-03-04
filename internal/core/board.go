@@ -12,15 +12,6 @@ type Tile struct {
 	LocationType LocationType
 }
 
-type Formation struct {
-	Name         string
-	GridW, GridH int              // e.g. 5x5 editor (optional)
-	Wants        map[Pos]UnitType // only cells the player reserved
-}
-type Deployment struct {
-	At map[*Unit]Pos // board coords, or relative coords if you anchor later
-}
-
 func (b *GameBoard) Height() int {
 	if b == nil {
 		return 0
@@ -76,4 +67,11 @@ func (b *GameBoard) MoveUnit(fx, fy, tx, ty int) bool {
 	dst.Unit = src.Unit
 	src.Unit = nil
 	return true
+}
+func (b *GameBoard) ClearUnits() {
+	for y := range b.Location {
+		for x := range b.Location[y] {
+			b.Location[y][x].Unit = nil
+		}
+	}
 }

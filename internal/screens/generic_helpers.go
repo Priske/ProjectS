@@ -26,3 +26,13 @@ func abs(x int) int {
 	}
 	return x
 }
+func unitTypesFor(cat core.UnitCategory) []core.UnitType {
+	switch cat {
+	case core.Attack:
+		return []core.UnitType{core.Soldier, core.Commander}
+	case core.Defense:
+		return []core.UnitType{ /* later */ }
+	default:
+		return nil
+	}
+}

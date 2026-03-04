@@ -1,14 +1,10 @@
 package screens
 
 import (
-	"image/color"
-
 	"github.com/Priske/ProjectS/interaction"
 	"github.com/Priske/ProjectS/internal/core"
 	GUI "github.com/Priske/ProjectS/internal/guiAssets"
-
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
 
 type PlayScreen struct {
@@ -18,13 +14,28 @@ type PlayScreen struct {
 	modal         *GUI.Modal
 	unPlacedUnits []*core.Unit
 	readyAdded    bool
+	setupMode     bool
+	reserveGrid   *GUI.GridField
+	readyWidget   core.Widget
+
+	formationWants                map[core.Pos]core.UnitType
+	selectedUnitCategory          core.UnitCategory
+	availableUnitTypesForCategory []core.UnitType
+	formationBrushUnitType        core.UnitType
 }
 
 func (ps *PlayScreen) Update(g core.Game) error {
 	input := g.Input()
 	if len(ps.unPlacedUnits) == 0 && !ps.readyAdded {
-		ps.widgets = append(ps.widgets, ps.makeRightSidebar(g))
+		ps.readyWidget = ps.makeReadyButton(g)
+		ps.widgets = append(ps.widgets, ps.readyWidget)
 		ps.readyAdded = true
+	}
+
+	if len(ps.unPlacedUnits) != 0 && ps.readyAdded {
+		ps.widgets = removeWidget(ps.widgets, ps.readyWidget)
+		ps.readyWidget = nil
+		ps.readyAdded = false
 	}
 	// If modal open: update only it (and return)
 	//Testing Modal
@@ -74,21 +85,6 @@ func (ps *PlayScreen) Update(g core.Game) error {
 	return nil
 }
 
-func (ps *PlayScreen) Draw(g core.Game, screen *ebiten.Image) {
-	ps.drawBackground(screen)
-	s := g.Settings()
-	offX, offY := getOffXY(g)
-	drawGrid(screen, offX, offY, s.BoardW, s.BoardH, s.CellSize)
-	ps.drawUnits(g, screen)       // skips dragged source tile
-	ps.drawDraggedUnit(g, screen) // draws on top
-	ps.drawUI(screen)
-	ps.drawDebug(screen)
-	if ps.modal != nil && ps.modal.Open {
-		ps.modal.Draw(screen)
-	}
-
-}
-
 func (ps *PlayScreen) mouseToCell(g core.Game, mx, my int) (cx, cy int, ok bool) {
 	s := g.Settings()
 	offX, offY := getOffXY(g)
@@ -116,6 +112,19 @@ func (ps *PlayScreen) cellTopLeft(g core.Game, cx, cy int) (px, py int) {
 func (ps *PlayScreen) handleDrop(g core.Game, mx, my int) (bool, string) {
 	defer func() { ps.drag.Active = false }()
 
+	// Return-to-reserve: dragging a unit from board onto reserve grid
+	if ps.setupMode && ps.drag.Source == interaction.DragFromBoard && ps.mouseOverReserve(mx, my) {
+		board := g.Board()
+		src := board.TilePtr(ps.drag.FromX, ps.drag.FromY)
+		if src == nil || src.Unit == nil {
+			return false, "no src unit"
+		}
+
+		u := src.Unit
+		src.Unit = nil
+		ps.unPlacedUnits = append(ps.unPlacedUnits, u)
+		return true, "returned"
+	}
 	toX, toY, ok := ps.mouseToCell(g, mx, my)
 	if !ok {
 		return false, "drop off board"
@@ -136,7 +145,10 @@ func (ps *PlayScreen) handleDrop(g core.Game, mx, my int) (bool, string) {
 		if !ok || u == nil {
 			return false, "invalid payload"
 		}
-
+		//Restrict players drop to first 3 columns
+		if toX >= 3 {
+			return false, "place only in first 3 columns"
+		}
 		dst.Unit = u
 		ps.unPlacedUnits = removeByID(ps.unPlacedUnits, u.UnitId)
 		return true, "placed"
@@ -146,6 +158,11 @@ func (ps *PlayScreen) handleDrop(g core.Game, mx, my int) (bool, string) {
 	fromX, fromY := ps.drag.FromX, ps.drag.FromY
 	if toX == fromX && toY == fromY {
 		return false, "same cell"
+	}
+	if ps.setupMode {
+		if fromX >= 3 || toX >= 3 {
+			return false, "can't move outside placement zone"
+		}
 	}
 
 	dx := abs(toX - fromX)
@@ -175,10 +192,6 @@ func (ps *PlayScreen) clickHitsWidget(mx, my int) bool {
 	return false
 }
 
-func (ps *PlayScreen) drawBackground(screen *ebiten.Image) {
-	screen.Fill(color.RGBA{20, 20, 24, 255})
-}
-
 // Named returns
 func (ps *PlayScreen) boardGeom(g core.Game) (offX, offY, w, h int, s core.Settings) {
 	s = g.Settings()
@@ -187,86 +200,85 @@ func (ps *PlayScreen) boardGeom(g core.Game) (offX, offY, w, h int, s core.Setti
 	h = s.BoardH * s.CellSize
 	return
 }
-func drawGrid(screen *ebiten.Image, offX, offY, boardW, boardH, cellSize int) {
-	w := boardW * cellSize
-	h := boardH * cellSize
-	line := color.RGBA{60, 60, 70, 255}
-
-	for x := 0; x <= boardW; x++ {
-		px := float64(offX + x*cellSize)
-		ebitenutil.DrawRect(screen, px, float64(offY), 1, float64(h), line)
-	}
-	for y := 0; y <= boardH; y++ {
-		py := float64(offY + y*cellSize)
-		ebitenutil.DrawRect(screen, float64(offX), py, float64(w), 1, line)
-	}
+func pointInRect(mx, my, x, y, w, h int) bool {
+	return mx >= x && mx < x+w && my >= y && my < y+h
 }
-func (ps *PlayScreen) drawUnits(g core.Game, screen *ebiten.Image) {
-	offX, offY, _, _, s := ps.boardGeom(g)
-	assets := g.Assets()
 
-	for y := 0; y < s.BoardH; y++ {
-		for x := 0; x < s.BoardW; x++ {
-			if ps.drag.Active && x == ps.drag.FromX && y == ps.drag.FromY {
-				continue
-			}
-			tile := g.Board().Location[y][x]
-			if tile.Unit == nil {
-				continue
-			}
-			ps.drawUnitImage(screen, assets, tile.Unit.Type, offX+x*s.CellSize, offY+y*s.CellSize, s.CellSize)
+func (ps *PlayScreen) mouseOverReserve(mx, my int) bool {
+	if ps.reserveGrid == nil {
+		return false
+	}
+	x, y, w, h := ps.reserveGrid.Bounds()
+	return pointInRect(mx, my, x, y, w, h)
+}
+func removeWidget(widgets []core.Widget, target core.Widget) []core.Widget {
+	for i := range widgets {
+		if widgets[i] == target {
+			return append(widgets[:i], widgets[i+1:]...)
 		}
 	}
+	return widgets
 }
 
-func (ps *PlayScreen) drawUnitImage(
-	screen *ebiten.Image,
-	assets core.Assets,
-	unitType core.UnitType,
-	px, py, cellSize int,
-) {
-	img := assets.UnitImages[unitType]
-	if img == nil {
-		return
+func (ps *PlayScreen) makeCategoryBar(g core.Game, x, y int) *GUI.GridField {
+	categories := []core.UnitCategory{core.Attack, core.Defense, core.Support}
+
+	gf := GUI.MakeGridField(x, y, len(categories), 1, 48)
+	gf.ShowGrid = true
+
+	gf.Get = func(cx, cy int) any { return categories[cx] }
+
+	gf.OnCellClick = func(cx, cy int) {
+		cat := categories[cx]
+		ps.openUnitPickerModal(g, cat) // opens popup of unit types for that category
 	}
-	op := &ebiten.DrawImageOptions{}
-	sw, sh := img.Bounds().Dx(), img.Bounds().Dy()
-	op.GeoM.Scale(float64(cellSize)/float64(sw), float64(cellSize)/float64(sh))
-	op.GeoM.Translate(float64(px), float64(py))
-	screen.DrawImage(img, op)
+
+	gf.DrawCell = func(dst *ebiten.Image, cx, cy, px, py, size int, payload any) {
+		// draw icon/text for category here
+	}
+
+	return gf
 }
+func (ps *PlayScreen) openUnitPickerModal(g core.Game, category core.UnitCategory) {
+	types := unitTypesFor(category)
+	cols := 4
+	rows := (len(types) + cols - 1) / cols
 
-func (ps *PlayScreen) drawDraggedUnit(g core.Game, screen *ebiten.Image) {
-	if !ps.drag.Active || ps.drag.Payload == nil {
-		return
+	pw, ph := 320, 240
+	px, py := (core.VirtualW-pw)/2, (core.VirtualH-ph)/2
+
+	picker := GUI.MakeGridField(px+16, py+16, cols, rows, 48)
+	picker.ShowGrid = true
+
+	picker.Get = func(cx, cy int) any {
+		i := cy*cols + cx
+		if i < 0 || i >= len(types) {
+			return nil
+		}
+		return types[i]
 	}
-	u, ok := ps.drag.Payload.(*core.Unit)
-	if !ok || u == nil {
-		return
+
+	picker.OnCellClick = func(cx, cy int) {
+		i := cy*cols + cx
+		if i < 0 || i >= len(types) {
+			return
+		}
+		ps.formationBrushUnitType = types[i] // set brush
+		if ps.modal != nil {
+			ps.modal.Close()
+		}
 	}
-	s := g.Settings()
-	assets := g.Assets()
-	img := assets.UnitImages[u.Type]
-	if img == nil {
-		return
+
+	picker.DrawCell = func(dst *ebiten.Image, cx, cy, px, py, size int, payload any) {
+		ut := payload.(core.UnitType)
+		ps.drawUnitImage(dst, g.Assets(), ut, px, py, 60)
 	}
 
-	op := &ebiten.DrawImageOptions{}
-	sw, sh := img.Bounds().Dx(), img.Bounds().Dy()
-	op.GeoM.Scale(float64(s.CellSize)/float64(sw), float64(s.CellSize)/float64(sh))
+	closeBtn := GUI.MakeButton(px+pw-110, py+ph-60, 90, 40, "Close", func() {
+		if ps.modal != nil {
+			ps.modal.Close()
+		}
+	})
 
-	drawX := ps.drag.MX - ps.drag.GrabOffX
-	drawY := ps.drag.MY - ps.drag.GrabOffY
-	op.GeoM.Translate(float64(drawX), float64(drawY))
-	screen.DrawImage(img, op)
-}
-
-func (ps *PlayScreen) drawUI(screen *ebiten.Image) {
-	for _, b := range ps.widgets {
-		b.Draw(screen)
-	}
-}
-
-func (ps *PlayScreen) drawDebug(screen *ebiten.Image) {
-	ebitenutil.DebugPrint(screen, "Drop: "+ps.lastDrop)
+	ps.modal = GUI.MakeModal(px, py, pw, ph, []core.Widget{picker, closeBtn})
 }
