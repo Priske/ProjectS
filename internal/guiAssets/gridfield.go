@@ -20,9 +20,10 @@ type GridField struct {
 	Set func(cx, cy int, v any) // optional (for internal rearranging)
 
 	// Optional callbacks
-	OnCellClick func(cx, cy int)
-	OnBeginDrag func(cx, cy int, payload any)
-	DrawCell    func(dst *ebiten.Image, cx, cy int, x, y, size int, payload any)
+	OnCellClick      func(cx, cy int)
+	OnBeginDrag      func(cx, cy int, payload any)
+	OnCellRightClick func(cx, cy int)
+	DrawCell         func(dst *ebiten.Image, cx, cy int, x, y, size int, payload any)
 }
 
 func MakeGridField(x, y, cols, rows, cell int) *GridField {
@@ -53,6 +54,19 @@ func (gf *GridField) mouseToCell(mx, my int) (cx, cy int, ok bool) {
 	return cx, cy, true
 }
 func (gf *GridField) Update(in core.Input) {
+	// RIGHT CLICK
+	if in.RightClicked {
+		cx, cy, ok := gf.mouseToCell(in.MX, in.MY)
+		if !ok {
+			return
+		}
+		if gf.OnCellRightClick != nil {
+			gf.OnCellRightClick(cx, cy)
+		}
+		return
+	}
+
+	// LEFT CLICK
 	if !in.LeftClicked {
 		return
 	}
@@ -73,7 +87,6 @@ func (gf *GridField) Update(in core.Input) {
 		}
 	}
 }
-
 func (gf *GridField) Draw(dst *ebiten.Image) {
 	// optional background
 	//ebitenutil.DrawRect(dst, float64(gf.X), float64(gf.Y), float64(gf.Cols*gf.Cell), float64(gf.Rows*gf.Cell), gf.BG)
@@ -118,4 +131,8 @@ func (gf *GridField) drawGrid(dst *ebiten.Image) {
 func (b *GridField) SetPos(x, y int) {
 	b.X = x
 	b.Y = y
+}
+
+func (gf *GridField) MouseToCell(mx, my int) (cx, cy int, ok bool) {
+	return gf.mouseToCell(mx, my)
 }

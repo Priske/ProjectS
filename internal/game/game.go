@@ -130,13 +130,15 @@ func (g *Game) pollInput() core.Input {
 	mx, my := ebiten.CursorPosition()
 
 	in := core.Input{
-		MX:          mx,
-		MY:          my,
-		LeftPressed: ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft),
-		LeftClicked: inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft),
-		RuneBuffer:  ebiten.AppendInputChars(nil),
-		Backspace:   inpututil.IsKeyJustPressed(ebiten.KeyBackspace),
-		Escape:      inpututil.IsKeyJustPressed(ebiten.KeyEscape),
+		MX:           mx,
+		MY:           my,
+		LeftPressed:  ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft),
+		LeftClicked:  inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft),
+		RightPressed: ebiten.IsMouseButtonPressed(ebiten.MouseButtonRight),
+		RightClicked: inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonRight),
+		RuneBuffer:   ebiten.AppendInputChars(nil),
+		Backspace:    inpututil.IsKeyJustPressed(ebiten.KeyBackspace),
+		Escape:       inpututil.IsKeyJustPressed(ebiten.KeyEscape),
 	}
 
 	return in

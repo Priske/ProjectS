@@ -37,4 +37,6 @@ type DragSource uint8
 const (
 	DragFromBoard DragSource = iota
 	DragFromGrid
+	DragFromFormationPalette
+	DragFromFormation
 )

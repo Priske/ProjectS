@@ -7,6 +7,7 @@ type Input struct {
 	LeftPressed  bool
 	LeftClicked  bool
 	RightClicked bool
+	RightPressed bool
 
 	RuneBuffer []rune
 	Backspace  bool

@@ -10,20 +10,27 @@ import (
 
 func (ps *PlayScreen) Draw(g core.Game, screen *ebiten.Image) {
 	ps.drawBackground(screen)
+
 	s := g.Settings()
 	offX, offY := getOffXY(g)
+	ps.makeRightSidebar(g)
 	if ps.setupMode {
 		drawPlacementZone(screen, offX, offY, s.BoardH, s.CellSize, 3)
 	}
+
 	drawGrid(screen, offX, offY, s.BoardW, s.BoardH, s.CellSize)
-	ps.drawUnits(g, screen)       // skips dragged source tile
-	ps.drawDraggedUnit(g, screen) // draws on top
+	ps.drawUnits(g, screen)
+
 	ps.drawUI(screen)
-	ps.drawDebug(screen)
+
 	if ps.modal != nil && ps.modal.Open {
 		ps.modal.Draw(screen)
 	}
 
+	// MUST be last so it shows above modal
+	ps.drawDraggedUnit(g, screen)
+
+	ps.drawDebug(screen)
 }
 
 func drawGrid(screen *ebiten.Image, offX, offY, boardW, boardH, cellSize int) {
@@ -93,12 +100,49 @@ func (ps *PlayScreen) drawDraggedUnit(g core.Game, screen *ebiten.Image) {
 	if !ps.drag.Active || ps.drag.Payload == nil {
 		return
 	}
+
+	s := g.Settings()
+	assets := g.Assets()
+
+	// 1) UnitType drag
+	if ut, ok := ps.drag.Payload.(core.UnitType); ok {
+		img := assets.UnitImages[ut]
+		if img == nil {
+			return
+		}
+		op := &ebiten.DrawImageOptions{}
+		sw, sh := img.Bounds().Dx(), img.Bounds().Dy()
+		op.GeoM.Scale(float64(s.CellSize)/float64(sw), float64(s.CellSize)/float64(sh))
+		op.GeoM.Translate(float64(ps.drag.MX-ps.drag.GrabOffX), float64(ps.drag.MY-ps.drag.GrabOffY))
+		screen.DrawImage(img, op)
+		return
+	}
+	//Draw formation drag
+	if f, ok := ps.drag.Payload.(*core.Formation); ok {
+
+		cx, cy, ok := ps.mouseToCell(g, ps.drag.MX, ps.drag.MY)
+		if !ok {
+			return
+		}
+
+		offX, offY := getOffXY(g)
+		s := g.Settings()
+
+		for pos, ut := range f.Wants {
+
+			px := offX + (cx+pos.X)*s.CellSize
+			py := offY + (cy+pos.Y)*s.CellSize
+
+			ps.drawUnitImage(screen, g.Assets(), ut, px, py, s.CellSize)
+		}
+
+		return
+	}
+	// 2) *Unit drag
 	u, ok := ps.drag.Payload.(*core.Unit)
 	if !ok || u == nil {
 		return
 	}
-	s := g.Settings()
-	assets := g.Assets()
 	img := assets.UnitImages[u.Type]
 	if img == nil {
 		return
@@ -107,10 +151,7 @@ func (ps *PlayScreen) drawDraggedUnit(g core.Game, screen *ebiten.Image) {
 	op := &ebiten.DrawImageOptions{}
 	sw, sh := img.Bounds().Dx(), img.Bounds().Dy()
 	op.GeoM.Scale(float64(s.CellSize)/float64(sw), float64(s.CellSize)/float64(sh))
-
-	drawX := ps.drag.MX - ps.drag.GrabOffX
-	drawY := ps.drag.MY - ps.drag.GrabOffY
-	op.GeoM.Translate(float64(drawX), float64(drawY))
+	op.GeoM.Translate(float64(ps.drag.MX-ps.drag.GrabOffX), float64(ps.drag.MY-ps.drag.GrabOffY))
 	screen.DrawImage(img, op)
 }
 

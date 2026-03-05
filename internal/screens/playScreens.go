@@ -8,15 +8,18 @@ import (
 )
 
 type PlayScreen struct {
-	widgets       []core.Widget
-	drag          interaction.DragState
-	lastDrop      string
-	modal         *GUI.Modal
-	unPlacedUnits []*core.Unit
-	readyAdded    bool
-	setupMode     bool
-	reserveGrid   *GUI.GridField
-	readyWidget   core.Widget
+	widgets                []core.Widget
+	drag                   interaction.DragState
+	lastDrop               string
+	modal                  *GUI.Modal
+	unPlacedUnits          []*core.Unit
+	readyAdded             bool
+	setupMode              bool
+	reserveGrid            *GUI.GridField
+	readyWidget            core.Widget
+	formationGrid          *GUI.GridField
+	unitOptionsGrid        *GUI.GridField
+	nameFormationTextField *GUI.TextField
 
 	formationWants                map[core.Pos]core.UnitType
 	selectedUnitCategory          core.UnitCategory
@@ -26,6 +29,11 @@ type PlayScreen struct {
 
 func (ps *PlayScreen) Update(g core.Game) error {
 	input := g.Input()
+	if ps.drag.Active {
+		ps.drag.MX = input.MX
+		ps.drag.MY = input.MY
+	}
+
 	if len(ps.unPlacedUnits) == 0 && !ps.readyAdded {
 		ps.readyWidget = ps.makeReadyButton(g)
 		ps.widgets = append(ps.widgets, ps.readyWidget)
@@ -39,8 +47,13 @@ func (ps *PlayScreen) Update(g core.Game) error {
 	}
 	// If modal open: update only it (and return)
 	//Testing Modal
+
 	if ps.modal != nil && ps.modal.Open {
 		ps.modal.Update(input)
+
+		if ps.drag.Active && !input.LeftPressed {
+			ps.tryDropIntoFormation(input.MX, input.MY)
+		}
 		return nil
 	}
 
@@ -49,10 +62,6 @@ func (ps *PlayScreen) Update(g core.Game) error {
 	}
 
 	// keep drag cursor fresh
-	if ps.drag.Active {
-		ps.drag.MX = input.MX
-		ps.drag.MY = input.MY
-	}
 
 	// Start drag on click
 	if !ps.drag.Active && input.LeftClicked && !ps.clickHitsWidget(input.MX, input.MY) {
@@ -107,79 +116,6 @@ func (ps *PlayScreen) cellTopLeft(g core.Game, cx, cy int) (px, py int) {
 	s := g.Settings()
 	offX, offY := getOffXY(g)
 	return offX + cx*s.CellSize, offY + cy*s.CellSize
-}
-
-func (ps *PlayScreen) handleDrop(g core.Game, mx, my int) (bool, string) {
-	defer func() { ps.drag.Active = false }()
-
-	// Return-to-reserve: dragging a unit from board onto reserve grid
-	if ps.setupMode && ps.drag.Source == interaction.DragFromBoard && ps.mouseOverReserve(mx, my) {
-		board := g.Board()
-		src := board.TilePtr(ps.drag.FromX, ps.drag.FromY)
-		if src == nil || src.Unit == nil {
-			return false, "no src unit"
-		}
-
-		u := src.Unit
-		src.Unit = nil
-		ps.unPlacedUnits = append(ps.unPlacedUnits, u)
-		return true, "returned"
-	}
-	toX, toY, ok := ps.mouseToCell(g, mx, my)
-	if !ok {
-		return false, "drop off board"
-	}
-
-	board := g.Board()
-	dst := board.TilePtr(toX, toY) // <- prefer your new accessor
-	if dst == nil {
-		return false, "drop off board"
-	}
-	if dst.Unit != nil {
-		return false, "dst occupied"
-	}
-
-	// ---- DRAG FROM GRID (placement)
-	if ps.drag.Source == interaction.DragFromGrid {
-		u, ok := ps.drag.Payload.(*core.Unit)
-		if !ok || u == nil {
-			return false, "invalid payload"
-		}
-		//Restrict players drop to first 3 columns
-		if toX >= 3 {
-			return false, "place only in first 3 columns"
-		}
-		dst.Unit = u
-		ps.unPlacedUnits = removeByID(ps.unPlacedUnits, u.UnitId)
-		return true, "placed"
-	}
-
-	// ---- DRAG FROM BOARD (movement)
-	fromX, fromY := ps.drag.FromX, ps.drag.FromY
-	if toX == fromX && toY == fromY {
-		return false, "same cell"
-	}
-	if ps.setupMode {
-		if fromX >= 3 || toX >= 3 {
-			return false, "can't move outside placement zone"
-		}
-	}
-
-	dx := abs(toX - fromX)
-	dy := abs(toY - fromY)
-	if dx+dy != 1 {
-		return false, "illegal move"
-	}
-
-	// mutate via pointers to avoid tile-copy bugs
-	src := board.TilePtr(fromX, fromY)
-	if src == nil || src.Unit == nil {
-		return false, "no src unit"
-	}
-
-	dst.Unit = src.Unit
-	src.Unit = nil
-	return true, "moved"
 }
 
 func (ps *PlayScreen) clickHitsWidget(mx, my int) bool {
@@ -281,4 +217,24 @@ func (ps *PlayScreen) openUnitPickerModal(g core.Game, category core.UnitCategor
 	})
 
 	ps.modal = GUI.MakeModal(px, py, pw, ph, []core.Widget{picker, closeBtn})
+}
+
+func (ps *PlayScreen) openNameFormationPopup(mx, my int) {
+	ps.nameFormationPopupOpen = true
+
+	if ps.nameFormationTextField == nil {
+		tf := GUI.MakeTextField(mx+20, my+40, 260, 36) // adjust ctor to your API
+		ps.nameFormationTextField = tf
+	} else {
+		ps.nameFormationTextField.SetPos(mx+20, my+40) // if you have SetPos
+		ps.nameFormationTextField.SetText("")          // clear if you have it
+	}
+
+	ps.nameFormationConfirmBtn = GUI.MakeButton(mx+20, my+90, 120, 36, "Confirm", func() {
+		ps.nameFormationPopupOpen = false
+	})
+
+	ps.nameFormationCancelBtn = GUI.MakeButton(mx+160, my+90, 120, 36, "Cancel", func() {
+		ps.nameFormationPopupOpen = false
+	})
 }
