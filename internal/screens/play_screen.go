@@ -3,29 +3,8 @@ package screens
 import (
 	"github.com/Priske/ProjectS/interaction"
 	"github.com/Priske/ProjectS/internal/core"
-	GUI "github.com/Priske/ProjectS/internal/guiAssets"
 	"github.com/hajimehoshi/ebiten/v2"
 )
-
-type PlayScreen struct {
-	widgets                []core.Widget
-	drag                   interaction.DragState
-	lastDrop               string
-	modal                  *GUI.Modal
-	unPlacedUnits          []*core.Unit
-	readyAdded             bool
-	setupMode              bool
-	reserveGrid            *GUI.GridField
-	readyWidget            core.Widget
-	formationGrid          *GUI.GridField
-	unitOptionsGrid        *GUI.GridField
-	nameFormationTextField *GUI.TextField
-
-	formationWants                map[core.Pos]core.UnitType
-	selectedUnitCategory          core.UnitCategory
-	availableUnitTypesForCategory []core.UnitType
-	formationBrushUnitType        core.UnitType
-}
 
 func (ps *PlayScreen) Update(g core.Game) error {
 	input := g.Input()
@@ -94,6 +73,31 @@ func (ps *PlayScreen) Update(g core.Game) error {
 	return nil
 }
 
+func (ps *PlayScreen) Draw(g core.Game, screen *ebiten.Image) {
+	ps.drawBackground(screen)
+
+	s := g.Settings()
+	offX, offY := getOffXY(g)
+	ps.makeRightSidebar(g)
+	if ps.setupMode {
+		drawPlacementZone(screen, offX, offY, s.BoardH, s.CellSize, 3)
+	}
+
+	drawGrid(screen, offX, offY, s.BoardW, s.BoardH, s.CellSize)
+	ps.drawUnits(g, screen)
+
+	ps.drawUI(screen)
+
+	if ps.modal != nil && ps.modal.Open {
+		ps.modal.Draw(screen)
+	}
+
+	// MUST be last so it shows above modal
+	ps.drawDraggedUnit(g, screen)
+
+	ps.drawDebug(screen)
+}
+
 func (ps *PlayScreen) mouseToCell(g core.Game, mx, my int) (cx, cy int, ok bool) {
 	s := g.Settings()
 	offX, offY := getOffXY(g)
@@ -154,87 +158,4 @@ func removeWidget(widgets []core.Widget, target core.Widget) []core.Widget {
 		}
 	}
 	return widgets
-}
-
-func (ps *PlayScreen) makeCategoryBar(g core.Game, x, y int) *GUI.GridField {
-	categories := []core.UnitCategory{core.Attack, core.Defense, core.Support}
-
-	gf := GUI.MakeGridField(x, y, len(categories), 1, 48)
-	gf.ShowGrid = true
-
-	gf.Get = func(cx, cy int) any { return categories[cx] }
-
-	gf.OnCellClick = func(cx, cy int) {
-		cat := categories[cx]
-		ps.openUnitPickerModal(g, cat) // opens popup of unit types for that category
-	}
-
-	gf.DrawCell = func(dst *ebiten.Image, cx, cy, px, py, size int, payload any) {
-		// draw icon/text for category here
-	}
-
-	return gf
-}
-func (ps *PlayScreen) openUnitPickerModal(g core.Game, category core.UnitCategory) {
-	types := unitTypesFor(category)
-	cols := 4
-	rows := (len(types) + cols - 1) / cols
-
-	pw, ph := 320, 240
-	px, py := (core.VirtualW-pw)/2, (core.VirtualH-ph)/2
-
-	picker := GUI.MakeGridField(px+16, py+16, cols, rows, 48)
-	picker.ShowGrid = true
-
-	picker.Get = func(cx, cy int) any {
-		i := cy*cols + cx
-		if i < 0 || i >= len(types) {
-			return nil
-		}
-		return types[i]
-	}
-
-	picker.OnCellClick = func(cx, cy int) {
-		i := cy*cols + cx
-		if i < 0 || i >= len(types) {
-			return
-		}
-		ps.formationBrushUnitType = types[i] // set brush
-		if ps.modal != nil {
-			ps.modal.Close()
-		}
-	}
-
-	picker.DrawCell = func(dst *ebiten.Image, cx, cy, px, py, size int, payload any) {
-		ut := payload.(core.UnitType)
-		ps.drawUnitImage(dst, g.Assets(), ut, px, py, 60)
-	}
-
-	closeBtn := GUI.MakeButton(px+pw-110, py+ph-60, 90, 40, "Close", func() {
-		if ps.modal != nil {
-			ps.modal.Close()
-		}
-	})
-
-	ps.modal = GUI.MakeModal(px, py, pw, ph, []core.Widget{picker, closeBtn})
-}
-
-func (ps *PlayScreen) openNameFormationPopup(mx, my int) {
-	ps.nameFormationPopupOpen = true
-
-	if ps.nameFormationTextField == nil {
-		tf := GUI.MakeTextField(mx+20, my+40, 260, 36) // adjust ctor to your API
-		ps.nameFormationTextField = tf
-	} else {
-		ps.nameFormationTextField.SetPos(mx+20, my+40) // if you have SetPos
-		ps.nameFormationTextField.SetText("")          // clear if you have it
-	}
-
-	ps.nameFormationConfirmBtn = GUI.MakeButton(mx+20, my+90, 120, 36, "Confirm", func() {
-		ps.nameFormationPopupOpen = false
-	})
-
-	ps.nameFormationCancelBtn = GUI.MakeButton(mx+160, my+90, 120, 36, "Cancel", func() {
-		ps.nameFormationPopupOpen = false
-	})
 }

@@ -8,31 +8,6 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
 
-func (ps *PlayScreen) Draw(g core.Game, screen *ebiten.Image) {
-	ps.drawBackground(screen)
-
-	s := g.Settings()
-	offX, offY := getOffXY(g)
-	ps.makeRightSidebar(g)
-	if ps.setupMode {
-		drawPlacementZone(screen, offX, offY, s.BoardH, s.CellSize, 3)
-	}
-
-	drawGrid(screen, offX, offY, s.BoardW, s.BoardH, s.CellSize)
-	ps.drawUnits(g, screen)
-
-	ps.drawUI(screen)
-
-	if ps.modal != nil && ps.modal.Open {
-		ps.modal.Draw(screen)
-	}
-
-	// MUST be last so it shows above modal
-	ps.drawDraggedUnit(g, screen)
-
-	ps.drawDebug(screen)
-}
-
 func drawGrid(screen *ebiten.Image, offX, offY, boardW, boardH, cellSize int) {
 	w := boardW * cellSize
 	h := boardH * cellSize
@@ -79,6 +54,9 @@ func (ps *PlayScreen) drawUnits(g core.Game, screen *ebiten.Image) {
 	}
 }
 
+// ///////////////
+// ///////////////
+
 func (ps *PlayScreen) drawUnitImage(
 	screen *ebiten.Image,
 	assets core.Assets,
@@ -95,6 +73,9 @@ func (ps *PlayScreen) drawUnitImage(
 	op.GeoM.Translate(float64(px), float64(py))
 	screen.DrawImage(img, op)
 }
+
+//////////////////////////////
+//////////////////////////////
 
 func (ps *PlayScreen) drawDraggedUnit(g core.Game, screen *ebiten.Image) {
 	if !ps.drag.Active || ps.drag.Payload == nil {
