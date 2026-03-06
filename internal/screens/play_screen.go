@@ -140,9 +140,6 @@ func (ps *PlayScreen) boardGeom(g core.Game) (offX, offY, w, h int, s core.Setti
 	h = s.BoardH * s.CellSize
 	return
 }
-func pointInRect(mx, my, x, y, w, h int) bool {
-	return mx >= x && mx < x+w && my >= y && my < y+h
-}
 
 func (ps *PlayScreen) mouseOverReserve(mx, my int) bool {
 	if ps.reserveGrid == nil {

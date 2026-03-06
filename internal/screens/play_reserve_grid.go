@@ -82,3 +82,11 @@ func (ps *PlayScreen) makeUnitsGrid(g core.Game) *GUI.GridField {
 
 	return grid
 }
+
+func (ps *PlayScreen) mouseOverReserve(mx, my int) bool {
+	if ps.reserveGrid == nil {
+		return false
+	}
+	x, y, w, h := ps.reserveGrid.Bounds()
+	return pointInRect(mx, my, x, y, w, h)
+}

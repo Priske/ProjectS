@@ -36,3 +36,16 @@ func unitTypesFor(cat core.UnitCategory) []core.UnitType {
 		return nil
 	}
 }
+
+func pointInRect(mx, my, x, y, w, h int) bool {
+	return mx >= x && mx < x+w && my >= y && my < y+h
+}
+
+func removeWidget(widgets []core.Widget, target core.Widget) []core.Widget {
+	for i := range widgets {
+		if widgets[i] == target {
+			return append(widgets[:i], widgets[i+1:]...)
+		}
+	}
+	return widgets
+}
