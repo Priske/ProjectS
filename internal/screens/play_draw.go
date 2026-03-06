@@ -54,15 +54,7 @@ func (ps *PlayScreen) drawUnits(g core.Game, screen *ebiten.Image) {
 	}
 }
 
-// ///////////////
-// ///////////////
-
-func (ps *PlayScreen) drawUnitImage(
-	screen *ebiten.Image,
-	assets core.Assets,
-	unitType core.UnitType,
-	px, py, cellSize int,
-) {
+func (ps *PlayScreen) drawUnitImage(screen *ebiten.Image, assets core.Assets, unitType core.UnitType, px, py, cellSize int) {
 	img := assets.UnitImages[unitType]
 	if img == nil {
 		return
@@ -73,9 +65,6 @@ func (ps *PlayScreen) drawUnitImage(
 	op.GeoM.Translate(float64(px), float64(py))
 	screen.DrawImage(img, op)
 }
-
-//////////////////////////////
-//////////////////////////////
 
 func (ps *PlayScreen) drawDraggedUnit(g core.Game, screen *ebiten.Image) {
 	if !ps.drag.Active || ps.drag.Payload == nil {

@@ -140,19 +140,3 @@ func (ps *PlayScreen) boardGeom(g core.Game) (offX, offY, w, h int, s core.Setti
 	h = s.BoardH * s.CellSize
 	return
 }
-
-func (ps *PlayScreen) mouseOverReserve(mx, my int) bool {
-	if ps.reserveGrid == nil {
-		return false
-	}
-	x, y, w, h := ps.reserveGrid.Bounds()
-	return pointInRect(mx, my, x, y, w, h)
-}
-func removeWidget(widgets []core.Widget, target core.Widget) []core.Widget {
-	for i := range widgets {
-		if widgets[i] == target {
-			return append(widgets[:i], widgets[i+1:]...)
-		}
-	}
-	return widgets
-}

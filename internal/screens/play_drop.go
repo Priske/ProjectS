@@ -116,3 +116,32 @@ func (ps *PlayScreen) tryDropIntoFormation(mx, my int) {
 	}
 	ps.formationWants[core.Pos{X: cx, Y: cy}] = ut
 }
+func (ps *PlayScreen) handleFormationDrop(g core.Game, mx, my int) (bool, string) {
+	defer func() { ps.drag.Active = false }()
+
+	if ps.drag.Source != interaction.DragFromFormationPalette {
+		return false, "not formation drag"
+	}
+
+	ut, ok := ps.drag.Payload.(core.UnitType)
+	if !ok {
+		return false, "bad payload"
+	}
+
+	// Convert mouse to formation cell
+	// You already know formation grid position: gridX/gridY/cell, 3x5.
+	// BEST: store a pointer on ps when you create it:
+	// ps.formationGrid = formationGrid
+	gf := ps.formationGrid
+	if gf == nil {
+		return false, "no formation grid"
+	}
+
+	cx, cy, ok := gf.MouseToCell(mx, my) // currently unexported
+	if !ok {
+		return false, "drop outside formation"
+	}
+
+	ps.formationWants[core.Pos{X: cx, Y: cy}] = ut
+	return true, "placed in formation"
+}
