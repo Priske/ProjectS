@@ -7,25 +7,20 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
-type List struct {
-	g  core.Game
-	ps PlayScreen
-
-	x, y int
-	w, h int
-
-	rowHeight  int
-	hoverIndex int
-}
-
 func (ps *PlayScreen) makeFormationSection(g core.Game) core.Widget {
 	widgets := []core.Widget{}
-
 	createFormationBtn := GUI.MakeButton(0, 0, 240, 50, "Create formation", func() {
 		ps.resetFormationDraft()
 		ps.openFormationEditorModal(g)
 	})
 	widgets = append(widgets, createFormationBtn)
+	widgets = append(widgets, ps.makeFormationListWidget(g)...)
+
+	return GUI.MakeCollapsible(0, 0, 240, 50, "Formations . . . ", widgets)
+}
+
+func (ps *PlayScreen) makeFormationListWidget(g core.Game) []core.Widget {
+	widgets := []core.Widget{}
 	for i := range g.LocalPlayer().Formations {
 
 		index := i
@@ -54,11 +49,10 @@ func (ps *PlayScreen) makeFormationSection(g core.Game) core.Widget {
 			PopupH:        5*32 + 16,
 			ClampToScreen: true,
 			DrawPopup: func(dst *ebiten.Image, px, py int) {
-				ps.drawFormationPreview(dst, g, index, px+8, py+8, 32)
+				drawFormationPreview(dst, g, index, px+8, py+8, 32)
 			},
 		}
 		widgets = append(widgets, btn, hover)
 	}
-
-	return GUI.MakeCollapsible(0, 0, 240, 50, "Formations . . . ", widgets)
+	return widgets
 }

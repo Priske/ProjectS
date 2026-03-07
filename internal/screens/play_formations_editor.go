@@ -1,26 +1,13 @@
 package screens
 
 import (
+	"fmt"
+
 	"github.com/Priske/ProjectS/interaction"
 	"github.com/Priske/ProjectS/internal/core"
 	GUI "github.com/Priske/ProjectS/internal/guiAssets"
 	"github.com/hajimehoshi/ebiten/v2"
 )
-
-type Editor struct {
-	g  core.Game
-	ps *PlayScreen
-
-	formationGrid   *GUI.GridField
-	unitOptionsGrid *GUI.GridField
-
-	wants            map[core.Pos]core.UnitType
-	selectedCategory core.UnitCategory
-	availableTypes   []core.UnitType
-	brushType        core.UnitType
-
-	nameField *GUI.TextField
-}
 
 func (ps *PlayScreen) makeUnitOptionsGrid(g core.Game, x, y int) *GUI.GridField {
 	const columns = 3
@@ -32,10 +19,10 @@ func (ps *PlayScreen) makeUnitOptionsGrid(g core.Game, x, y int) *GUI.GridField 
 
 	grid.Get = func(cx, cy int) any {
 		index := cy*columns + cx
-		if index < 0 || index >= len(ps.availableUnitTypesForCategory) {
+		if index < 0 || index >= len(ps.formation.availableUnitTypesForCategory) {
 			return nil
 		}
-		return ps.availableUnitTypesForCategory[index]
+		return ps.formation.availableUnitTypesForCategory[index]
 	}
 
 	grid.DrawCell = func(dst *ebiten.Image, cx, cy, px, py, size int, payload any) {
@@ -43,7 +30,7 @@ func (ps *PlayScreen) makeUnitOptionsGrid(g core.Game, x, y int) *GUI.GridField 
 		if !ok {
 			return
 		}
-		ps.drawUnitImage(dst, g.Assets(), ut, px, py, size)
+		drawUnitImage(dst, g.Assets(), ut, px, py, size)
 	}
 
 	// IMPORTANT: do NOT reference ps.modal here (it might still be nil while building)
@@ -83,7 +70,7 @@ func (ps *PlayScreen) openFormationEditorModal(g core.Game) {
 
 	// Left: formation grid (3x5)
 	formationGrid := ps.makeFormationGrid(g, gridX, gridY, cell)
-	ps.formationGrid = formationGrid
+	ps.formation.formationGrid = formationGrid
 	// Right-top: category grid
 	categoryGridX := gridX + (3 * cell) + padding
 	categoryGridY := gridY
@@ -96,7 +83,7 @@ func (ps *PlayScreen) openFormationEditorModal(g core.Game) {
 	// Buttons
 	saveBtn, closeBtn := ps.makeFormationModalButtons(g, mx, my, mw, mh, padding)
 
-	ps.modal = GUI.MakeModal(mx, my, mw, mh, []core.Widget{
+	ps.ui.modal = GUI.MakeModal(mx, my, mw, mh, []core.Widget{
 		formationGrid,
 		categoryGrid,
 		unitOptionsGrid,
@@ -107,21 +94,21 @@ func (ps *PlayScreen) openFormationEditorModal(g core.Game) {
 
 // Ensures editor state exists and sets sensible defaults.
 func (ps *PlayScreen) ensureFormationEditorState(g core.Game) {
-	if ps.formationWants == nil {
-		ps.formationWants = map[core.Pos]core.UnitType{}
+	if ps.formation.formationWants == nil {
+		ps.formation.formationWants = map[core.Pos]core.UnitType{}
 	}
 
 	// Pick a valid default brush from actual owned units (guaranteed drawable)
 	if len(g.LocalPlayer().Units) > 0 {
-		ps.formationBrushUnitType = g.LocalPlayer().Units[0].Type
+		ps.formation.formationBrushUnitType = g.LocalPlayer().Units[0].Type
 	} else {
 		// fallback: only if you truly have no units
-		ps.formationBrushUnitType = core.Soldier
+		ps.formation.formationBrushUnitType = core.Soldier
 	}
 
 	// Defaults for category UI
-	ps.selectedUnitCategory = core.Attack
-	ps.availableUnitTypesForCategory = unitTypesFor(ps.selectedUnitCategory)
+	ps.formation.selectedUnitCategory = core.Attack
+	ps.formation.availableUnitTypesForCategory = unitTypesFor(ps.formation.selectedUnitCategory)
 }
 
 // Builds the left formation editor grid.
@@ -131,11 +118,11 @@ func (ps *PlayScreen) makeFormationGrid(g core.Game, x, y, cell int) *GUI.GridFi
 
 	grid.OnCellRightClick = func(cx, cy int) {
 
-		delete(ps.formationWants, core.Pos{X: cx, Y: cy})
+		delete(ps.formation.formationWants, core.Pos{X: cx, Y: cy})
 	}
 
 	grid.Get = func(cx, cy int) any {
-		ut, ok := ps.formationWants[core.Pos{X: cx, Y: cy}]
+		ut, ok := ps.formation.formationWants[core.Pos{X: cx, Y: cy}]
 		if !ok {
 			return nil
 		}
@@ -144,7 +131,7 @@ func (ps *PlayScreen) makeFormationGrid(g core.Game, x, y, cell int) *GUI.GridFi
 
 	grid.DrawCell = func(dst *ebiten.Image, cx, cy, px, py, size int, payload any) {
 		ut := payload.(core.UnitType)
-		ps.drawUnitImage(dst, g.Assets(), ut, px, py, size)
+		drawUnitImage(dst, g.Assets(), ut, px, py, size)
 	}
 
 	return grid
@@ -167,8 +154,8 @@ func (ps *PlayScreen) makeUnitCategoryGrid(g core.Game, x, y int) *GUI.GridField
 	}
 
 	grid.OnCellClick = func(cx, cy int) {
-		ps.selectedUnitCategory = unitCategories[cx]
-		ps.availableUnitTypesForCategory = unitTypesFor(ps.selectedUnitCategory)
+		ps.formation.selectedUnitCategory = unitCategories[cx]
+		ps.formation.availableUnitTypesForCategory = unitTypesFor(ps.formation.selectedUnitCategory)
 	}
 
 	return grid
@@ -181,39 +168,68 @@ func (ps *PlayScreen) makeFormationModalButtons(g core.Game, mx, my, mw, mh, pad
 	btnY := my + mh - padding - btnH
 
 	closeBtn = GUI.MakeButton(mx+mw-padding-btnW, btnY, btnW, btnH, "Close", func() {
-		if ps.modal != nil {
+		if ps.ui.modal != nil {
 
-			ps.modal.Close()
+			ps.ui.modal.Close()
 		}
 	})
 
 	saveBtn = GUI.MakeButton(mx+mw-padding-2*btnW-gap, btnY, btnW, btnH, "Save", func() {
-		// build formation from the current draft
-		newFormation := core.Formation{
-			Name:  "My Formation", // later: prompt for name
-			W:     3,
-			H:     5,
-			Wants: copyFormationWants(ps.formationWants),
-		}
-
-		g.LocalPlayer().Formations = append(g.LocalPlayer().Formations, newFormation)
-
-		ps.resetFormationDraft()
-		if ps.modal != nil {
-			ps.modal.Close()
-		}
-		ps.rebuildLeftSidebar(g)
+		fmt.Println("SAVE CLICKED")
+		ps.openFormationNamePrompt(g)
 	})
 
 	return saveBtn, closeBtn
 }
+func (ps *PlayScreen) openFormationNamePrompt(g core.Game) {
+	px, py := 340, 180
+	pw, ph := 320, 140
+	maxlen := 50
+	placeholder := "Formation name"
+	fmt.Println("OPEN NAME PROMPT")
+	nameField := GUI.MakeTextField(px+20, py+20, 280, 36, maxlen, placeholder)
+
+	confirmBtn := GUI.MakeButton(px+20, py+80, 120, 36, "Confirm", func() {
+		name := nameField.Text
+		if name == "" {
+			name = "Unnamed"
+		}
+
+		newFormation := core.Formation{
+			Name:  name,
+			W:     3,
+			H:     5,
+			Wants: copyFormationWants(ps.formation.formationWants),
+		}
+
+		g.LocalPlayer().Formations = append(g.LocalPlayer().Formations, newFormation)
+
+		ps.ui.overlay = nil
+		ps.resetFormationDraft()
+		if ps.ui.modal != nil {
+			ps.ui.modal.Close()
+		}
+		// TEMPORARY until formation list becomes truly dynamic:
+		ps.rebuildLeftSidebar(g)
+	})
+
+	cancelBtn := GUI.MakeButton(px+160, py+80, 120, 36, "Cancel", func() {
+		ps.ui.overlay = nil
+	})
+
+	ps.ui.overlay = GUI.MakeModal(px, py, pw, ph, []core.Widget{
+		nameField,
+		confirmBtn,
+		cancelBtn,
+	})
+}
 
 func (ps *PlayScreen) resetFormationDraft() {
-	ps.formationWants = make(map[core.Pos]core.UnitType) // new empty map
+	ps.formation.formationWants = make(map[core.Pos]core.UnitType) // new empty map
 	// optional: reset selected category / options
-	ps.selectedUnitCategory = core.Attack
-	ps.availableUnitTypesForCategory = nil
-	ps.formationGrid = nil
+	ps.formation.selectedUnitCategory = core.Attack
+	ps.formation.availableUnitTypesForCategory = nil
+	ps.formation.formationGrid = nil
 }
 
 func (ps *PlayScreen) openUnitSelectionModal(g core.Game) {
@@ -231,32 +247,32 @@ func (ps *PlayScreen) openUnitSelectionModal(g core.Game) {
 	unitGrid := GUI.MakeGridField(
 		gridX,
 		gridY,
-		len(ps.availableUnitTypesForCategory),
+		len(ps.formation.availableUnitTypesForCategory),
 		1,
 		cell,
 	)
 	unitGrid.ShowGrid = true
 
 	unitGrid.Get = func(cx, cy int) any {
-		if cx < 0 || cx >= len(ps.availableUnitTypesForCategory) {
+		if cx < 0 || cx >= len(ps.formation.availableUnitTypesForCategory) {
 			return nil
 		}
-		return ps.availableUnitTypesForCategory[cx]
+		return ps.formation.availableUnitTypesForCategory[cx]
 	}
 
 	unitGrid.DrawCell = func(dst *ebiten.Image, cx, cy, px, py, size int, payload any) {
 		ut := payload.(core.UnitType)
-		ps.drawUnitImage(dst, g.Assets(), ut, px, py, size)
+		drawUnitImage(dst, g.Assets(), ut, px, py, size)
 	}
 
 	// Clicking an option sets the brush and closes the popup
 	unitGrid.OnCellClick = func(cx, cy int) {
-		if cx < 0 || cx >= len(ps.availableUnitTypesForCategory) {
+		if cx < 0 || cx >= len(ps.formation.availableUnitTypesForCategory) {
 			return
 		}
-		ps.formationBrushUnitType = ps.availableUnitTypesForCategory[cx]
-		if ps.modal != nil {
-			ps.modal.Close()
+		ps.formation.formationBrushUnitType = ps.formation.availableUnitTypesForCategory[cx]
+		if ps.ui.modal != nil {
+			ps.ui.modal.Close()
 		}
 	}
 
@@ -267,13 +283,13 @@ func (ps *PlayScreen) openUnitSelectionModal(g core.Game) {
 		30,
 		"Close",
 		func() {
-			if ps.modal != nil {
-				ps.modal.Close()
+			if ps.ui.modal != nil {
+				ps.ui.modal.Close()
 			}
 		},
 	)
 
-	ps.modal = GUI.MakeModal(
+	ps.ui.modal = GUI.MakeModal(
 		mx,
 		my,
 		mw,
@@ -328,22 +344,22 @@ func (ps *PlayScreen) openUnitPickerModal(g core.Game, category core.UnitCategor
 		if i < 0 || i >= len(types) {
 			return
 		}
-		ps.formationBrushUnitType = types[i] // set brush
-		if ps.modal != nil {
-			ps.modal.Close()
+		ps.formation.formationBrushUnitType = types[i] // set brush
+		if ps.ui.modal != nil {
+			ps.ui.modal.Close()
 		}
 	}
 
 	picker.DrawCell = func(dst *ebiten.Image, cx, cy, px, py, size int, payload any) {
 		ut := payload.(core.UnitType)
-		ps.drawUnitImage(dst, g.Assets(), ut, px, py, 60)
+		drawUnitImage(dst, g.Assets(), ut, px, py, 60)
 	}
 
 	closeBtn := GUI.MakeButton(px+pw-110, py+ph-60, 90, 40, "Close", func() {
-		if ps.modal != nil {
-			ps.modal.Close()
+		if ps.ui.modal != nil {
+			ps.ui.modal.Close()
 		}
 	})
 
-	ps.modal = GUI.MakeModal(px, py, pw, ph, []core.Widget{picker, closeBtn})
+	ps.ui.modal = GUI.MakeModal(px, py, pw, ph, []core.Widget{picker, closeBtn})
 }

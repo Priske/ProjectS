@@ -49,3 +49,46 @@ func removeWidget(widgets []core.Widget, target core.Widget) []core.Widget {
 	}
 	return widgets
 }
+
+func mouseToCell(g core.Game, mx, my int) (cx, cy int, ok bool) {
+	s := g.Settings()
+	offX, offY := getOffXY(g)
+
+	mx -= offX
+	my -= offY
+	if mx < 0 || my < 0 {
+		return 0, 0, false
+	}
+
+	cx = mx / s.CellSize
+	cy = my / s.CellSize
+	if cx < 0 || cx >= s.BoardW || cy < 0 || cy >= s.BoardH {
+		return 0, 0, false
+	}
+	return cx, cy, true
+}
+
+func cellTopLeft(g core.Game, cx, cy int) (px, py int) {
+	s := g.Settings()
+	offX, offY := getOffXY(g)
+	return offX + cx*s.CellSize, offY + cy*s.CellSize
+}
+
+func clickHitsWidget(mx, my int, widgets []core.Widget) bool {
+	for _, w := range widgets {
+		x, y, ww, hh := w.Bounds()
+		if mx >= x && mx < x+ww && my >= y && my < y+hh {
+			return true
+		}
+	}
+	return false
+}
+
+// Named returns
+func boardGeom(g core.Game) (offX, offY, w, h int, s core.Settings) {
+	s = g.Settings()
+	offX, offY = getOffXY(g)
+	w = s.BoardW * s.CellSize
+	h = s.BoardH * s.CellSize
+	return
+}

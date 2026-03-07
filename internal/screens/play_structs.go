@@ -20,14 +20,16 @@ type SetupState struct {
 }
 
 type FormationEditorState struct {
-	formationGrid   *GUI.GridField
-	unitOptionsGrid *GUI.GridField
+	formationGrid          *GUI.GridField
+	unitOptionsGrid        *GUI.GridField
+	nameFormationTextField *GUI.TextField
 
-	draftWants       map[core.Pos]core.UnitType
-	selectedCategory core.UnitCategory
-	availableTypes   []core.UnitType
-	brushType        core.UnitType
+	formationWants                map[core.Pos]core.UnitType
+	selectedUnitCategory          core.UnitCategory
+	availableUnitTypesForCategory []core.UnitType
+	formationBrushUnitType        core.UnitType
+}
 
-	// optional: if you keep a textfield around for reuse
-	nameTextField *GUI.TextField
+type ReserveState struct {
+	grid *GUI.GridField
 }

@@ -22,7 +22,7 @@ func (t *TextField) Bounds() (x, y, w, h int) {
 	return t.X, t.Y, t.W, t.H
 }
 
-func MakeTextField(X, Y, W, H, maxlen int, placeholder string) core.Widget {
+func MakeTextField(X, Y, W, H, maxlen int, placeholder string) *TextField {
 	return &TextField{
 		X: X,
 		Y: Y,
@@ -88,4 +88,8 @@ func (t *TextField) Draw(screen *ebiten.Image) {
 func (t *TextField) SetPos(x, y int) {
 	t.X = x
 	t.Y = y
+}
+
+func (t *TextField) GetText() string {
+	return t.Text
 }

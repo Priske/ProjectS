@@ -22,16 +22,16 @@ func (ps *PlayScreen) makeOptionsSidebar(g core.Game) core.Widget {
 }
 
 func (ps *PlayScreen) makePlaceUnitSection(g core.Game) core.Widget {
-	grid := ps.makeUnitsGrid(g) // returns core.Widget
-	ps.reserveGrid = grid
+	ps.reserve.grid = ps.makeUnitsGrid(g)
+	grid := ps.reserve.grid
 	return GUI.MakeCollapsible(0, 0, 240, 50, "Place Unit . . .", []core.Widget{
 		grid,
 	})
 }
 
 func (ps *PlayScreen) rebuildLeftSidebar(g core.Game) {
-	ps.widgets = nil
-	ps.widgets = append(ps.widgets,
+	ps.ui.widgets = nil
+	ps.ui.widgets = append(ps.ui.widgets,
 		ps.makeOptionsSidebar(g), // or whatever you call it
 	)
 }

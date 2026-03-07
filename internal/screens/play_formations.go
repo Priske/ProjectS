@@ -13,7 +13,7 @@ func copyFormationWants(src map[core.Pos]core.UnitType) map[core.Pos]core.UnitTy
 	return dst
 }
 
-func (ps *PlayScreen) drawFormationPreview(dst *ebiten.Image, g core.Game, formationIndex int, x, y, cell int) {
+func drawFormationPreview(dst *ebiten.Image, g core.Game, formationIndex int, x, y, cell int) {
 	f := g.LocalPlayer().Formations[formationIndex]
 
 	// draw grid lines (optional)
@@ -21,7 +21,7 @@ func (ps *PlayScreen) drawFormationPreview(dst *ebiten.Image, g core.Game, forma
 	for pos, ut := range f.Wants {
 		px := x + pos.X*cell
 		py := y + pos.Y*cell
-		ps.drawUnitImage(dst, g.Assets(), ut, px, py, cell)
+		drawUnitImage(dst, g.Assets(), ut, px, py, cell)
 	}
 }
 
@@ -41,7 +41,7 @@ func (ps *PlayScreen) deployFormation(g core.Game, f *core.Formation, cx, cy int
 
 	board := g.Board()
 
-	available := append([]*core.Unit{}, ps.unPlacedUnits...)
+	available := append([]*core.Unit{}, ps.setup.unPlacedUnits...)
 
 	for pos, ut := range f.Wants {
 
@@ -67,5 +67,5 @@ func (ps *PlayScreen) deployFormation(g core.Game, f *core.Formation, cx, cy int
 		board.Location[by][bx].Unit = unit
 	}
 
-	ps.unPlacedUnits = available
+	ps.setup.unPlacedUnits = available
 }

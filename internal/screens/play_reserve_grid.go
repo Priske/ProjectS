@@ -10,7 +10,7 @@ import (
 )
 
 func (ps *PlayScreen) makeUnitsGrid(g core.Game) *GUI.GridField {
-	unitCount := len(ps.unPlacedUnits)
+	unitCount := len(ps.setup.unPlacedUnits)
 
 	// fixed 5 columns, variable rows
 	cols := 5
@@ -31,10 +31,10 @@ func (ps *PlayScreen) makeUnitsGrid(g core.Game) *GUI.GridField {
 	// (cx,cy) -> unit pointer (from unPlacedUnits)
 	grid.Get = func(cx, cy int) any {
 		i := cy*grid.Cols + cx
-		if i < 0 || i >= len(ps.unPlacedUnits) {
+		if i < 0 || i >= len(ps.setup.unPlacedUnits) {
 			return nil
 		}
-		return ps.unPlacedUnits[i]
+		return ps.setup.unPlacedUnits[i]
 	}
 	grid.OnBeginDrag = func(cx, cy int, payload any) {
 		u, ok := payload.(*core.Unit)
@@ -84,9 +84,9 @@ func (ps *PlayScreen) makeUnitsGrid(g core.Game) *GUI.GridField {
 }
 
 func (ps *PlayScreen) mouseOverReserve(mx, my int) bool {
-	if ps.reserveGrid == nil {
+	if ps.reserve.grid == nil {
 		return false
 	}
-	x, y, w, h := ps.reserveGrid.Bounds()
+	x, y, w, h := ps.reserve.grid.Bounds()
 	return pointInRect(mx, my, x, y, w, h)
 }

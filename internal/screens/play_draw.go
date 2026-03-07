@@ -37,7 +37,7 @@ func drawPlacementZone(screen *ebiten.Image, offX, offY, boardH, cellSize int, c
 }
 
 func (ps *PlayScreen) drawUnits(g core.Game, screen *ebiten.Image) {
-	offX, offY, _, _, s := ps.boardGeom(g)
+	offX, offY, _, _, s := boardGeom(g)
 	assets := g.Assets()
 
 	for y := 0; y < s.BoardH; y++ {
@@ -49,12 +49,12 @@ func (ps *PlayScreen) drawUnits(g core.Game, screen *ebiten.Image) {
 			if tile.Unit == nil {
 				continue
 			}
-			ps.drawUnitImage(screen, assets, tile.Unit.Type, offX+x*s.CellSize, offY+y*s.CellSize, s.CellSize)
+			drawUnitImage(screen, assets, tile.Unit.Type, offX+x*s.CellSize, offY+y*s.CellSize, s.CellSize)
 		}
 	}
 }
 
-func (ps *PlayScreen) drawUnitImage(screen *ebiten.Image, assets core.Assets, unitType core.UnitType, px, py, cellSize int) {
+func drawUnitImage(screen *ebiten.Image, assets core.Assets, unitType core.UnitType, px, py, cellSize int) {
 	img := assets.UnitImages[unitType]
 	if img == nil {
 		return
@@ -90,7 +90,7 @@ func (ps *PlayScreen) drawDraggedUnit(g core.Game, screen *ebiten.Image) {
 	//Draw formation drag
 	if f, ok := ps.drag.Payload.(*core.Formation); ok {
 
-		cx, cy, ok := ps.mouseToCell(g, ps.drag.MX, ps.drag.MY)
+		cx, cy, ok := mouseToCell(g, ps.drag.MX, ps.drag.MY)
 		if !ok {
 			return
 		}
@@ -103,7 +103,7 @@ func (ps *PlayScreen) drawDraggedUnit(g core.Game, screen *ebiten.Image) {
 			px := offX + (cx+pos.X)*s.CellSize
 			py := offY + (cy+pos.Y)*s.CellSize
 
-			ps.drawUnitImage(screen, g.Assets(), ut, px, py, s.CellSize)
+			drawUnitImage(screen, g.Assets(), ut, px, py, s.CellSize)
 		}
 
 		return
@@ -126,15 +126,35 @@ func (ps *PlayScreen) drawDraggedUnit(g core.Game, screen *ebiten.Image) {
 }
 
 func (ps *PlayScreen) drawUI(screen *ebiten.Image) {
-	for _, b := range ps.widgets {
+	for _, b := range ps.ui.widgets {
 		b.Draw(screen)
 	}
 }
 
 func (ps *PlayScreen) drawDebug(screen *ebiten.Image) {
-	ebitenutil.DebugPrint(screen, "Drop: "+ps.lastDrop)
+	ebitenutil.DebugPrint(screen, "Drop: "+ps.ui.lastDrop)
 }
 
 func (ps *PlayScreen) drawBackground(screen *ebiten.Image) {
 	screen.Fill(color.RGBA{20, 20, 24, 255})
+}
+
+func (ps *PlayScreen) drawBoard(g core.Game, screen *ebiten.Image) {
+	s := g.Settings()
+	offX, offY := getOffXY(g)
+
+	if ps.setup.setupMode {
+		drawPlacementZone(screen, offX, offY, s.BoardH, s.CellSize, 3)
+	}
+
+	drawGrid(screen, offX, offY, s.BoardW, s.BoardH, s.CellSize)
+	ps.drawUnits(g, screen)
+}
+func (ps *PlayScreen) drawModal(screen *ebiten.Image) {
+	if ps.ui.modal != nil && ps.ui.modal.Open {
+		ps.ui.modal.Draw(screen)
+	}
+	if ps.ui.overlay != nil {
+		ps.ui.overlay.Draw(screen)
+	}
 }
