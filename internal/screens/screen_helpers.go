@@ -92,3 +92,28 @@ func boardGeom(g core.Game) (offX, offY, w, h int, s core.Settings) {
 	h = s.BoardH * s.CellSize
 	return
 }
+
+func formationOrigin(f *core.Formation) (minX, minY int) {
+	first := true
+
+	for pos := range f.Wants {
+		if first {
+			minX = pos.X
+			minY = pos.Y
+			first = false
+			continue
+		}
+		if pos.X < minX {
+			minX = pos.X
+		}
+		if pos.Y < minY {
+			minY = pos.Y
+		}
+	}
+
+	return minX, minY
+}
+func formationBoardCell(f *core.Formation, cx, cy int, pos core.Pos) (bx, by int) {
+	ox, oy := formationOrigin(f)
+	return cx + (pos.X - ox), cy + (pos.Y - oy)
+}

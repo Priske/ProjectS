@@ -24,29 +24,48 @@ func drawFormationPreview(dst *ebiten.Image, g core.Game, formationIndex int, x,
 		drawUnitImage(dst, g.Assets(), ut, px, py, cell)
 	}
 }
+func (ps *PlayScreen) formationFits(g core.Game, f *core.Formation, cx, cy int) bool {
+	board := g.Board()
 
-func (ps *PlayScreen) formationFits(cx, cy int) bool {
+	for pos := range f.Wants {
+		bx, by := formationBoardCell(f, cx, cy, pos)
 
-	if cx < 0 || cx+3 > 3 { // formation width
-		return false
-	}
+		if by < 0 || by >= len(board.Location) {
+			return false
+		}
+		if bx < 0 || bx >= len(board.Location[by]) {
+			return false
+		}
 
-	if cy < 0 || cy+5 > 10 { // formation height
-		return false
+		// player deployment zone: first 3 columns only
+		if bx < 0 || bx >= 3 {
+			return false
+		}
+
+		if board.Location[by][bx].Unit != nil {
+			return false
+		}
 	}
 
 	return true
 }
 func (ps *PlayScreen) deployFormation(g core.Game, f *core.Formation, cx, cy int) {
-
 	board := g.Board()
-
 	available := append([]*core.Unit{}, ps.setup.unPlacedUnits...)
 
 	for pos, ut := range f.Wants {
+		bx, by := formationBoardCell(f, cx, cy, pos)
+		if by < 0 || by >= len(board.Location) {
+			continue
+		}
+		if bx < 0 || bx >= len(board.Location[by]) {
+			continue
+		}
+		if board.Location[by][bx].Unit != nil {
+			continue
+		}
 
 		unitIndex := -1
-
 		for i, u := range available {
 			if u.Type == ut {
 				unitIndex = i
@@ -55,15 +74,11 @@ func (ps *PlayScreen) deployFormation(g core.Game, f *core.Formation, cx, cy int
 		}
 
 		if unitIndex == -1 {
-			continue // no unit available of that type
+			continue
 		}
 
 		unit := available[unitIndex]
 		available = append(available[:unitIndex], available[unitIndex+1:]...)
-
-		bx := cx + pos.X
-		by := cy + pos.Y
-
 		board.Location[by][bx].Unit = unit
 	}
 

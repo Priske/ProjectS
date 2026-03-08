@@ -1,8 +1,6 @@
 package screens
 
 import (
-	"fmt"
-
 	"github.com/Priske/ProjectS/interaction"
 	"github.com/Priske/ProjectS/internal/core"
 	GUI "github.com/Priske/ProjectS/internal/guiAssets"
@@ -150,12 +148,26 @@ func (ps *PlayScreen) makeUnitCategoryGrid(g core.Game, x, y int) *GUI.GridField
 	grid.ShowGrid = true
 
 	grid.Get = func(cx, cy int) any {
+		if cx < 0 || cx >= len(unitCategories) {
+			return nil
+		}
 		return unitCategories[cx]
 	}
 
 	grid.OnCellClick = func(cx, cy int) {
+		if cx < 0 || cx >= len(unitCategories) {
+			return
+		}
 		ps.formation.selectedUnitCategory = unitCategories[cx]
 		ps.formation.availableUnitTypesForCategory = unitTypesFor(ps.formation.selectedUnitCategory)
+	}
+
+	grid.DrawCell = func(dst *ebiten.Image, cx, cy, px, py, size int, payload any) {
+		cat, ok := payload.(core.UnitCategory)
+		if !ok {
+			return
+		}
+		drawCategoryImage(dst, g.Assets(), cat, px, py, size)
 	}
 
 	return grid
@@ -175,7 +187,6 @@ func (ps *PlayScreen) makeFormationModalButtons(g core.Game, mx, my, mw, mh, pad
 	})
 
 	saveBtn = GUI.MakeButton(mx+mw-padding-2*btnW-gap, btnY, btnW, btnH, "Save", func() {
-		fmt.Println("SAVE CLICKED")
 		ps.openFormationNamePrompt(g)
 	})
 
@@ -186,7 +197,6 @@ func (ps *PlayScreen) openFormationNamePrompt(g core.Game) {
 	pw, ph := 320, 140
 	maxlen := 50
 	placeholder := "Formation name"
-	fmt.Println("OPEN NAME PROMPT")
 	nameField := GUI.MakeTextField(px+20, py+20, 280, 36, maxlen, placeholder)
 
 	confirmBtn := GUI.MakeButton(px+20, py+80, 120, 36, "Confirm", func() {
@@ -209,8 +219,7 @@ func (ps *PlayScreen) openFormationNamePrompt(g core.Game) {
 		if ps.ui.modal != nil {
 			ps.ui.modal.Close()
 		}
-		// TEMPORARY until formation list becomes truly dynamic:
-		ps.rebuildLeftSidebar(g)
+
 	})
 
 	cancelBtn := GUI.MakeButton(px+160, py+80, 120, 36, "Cancel", func() {
@@ -302,6 +311,7 @@ func (ps *PlayScreen) openUnitSelectionModal(g core.Game) {
 }
 
 func (ps *PlayScreen) makeCategoryBar(g core.Game, x, y int) *GUI.GridField {
+
 	categories := []core.UnitCategory{core.Attack, core.Defense, core.Support}
 
 	gf := GUI.MakeGridField(x, y, len(categories), 1, 48)
@@ -315,7 +325,11 @@ func (ps *PlayScreen) makeCategoryBar(g core.Game, x, y int) *GUI.GridField {
 	}
 
 	gf.DrawCell = func(dst *ebiten.Image, cx, cy, px, py, size int, payload any) {
-		// draw icon/text for category here
+		ut, ok := payload.(core.UnitCategory)
+		if !ok {
+			return
+		}
+		drawCategoryImage(dst, g.Assets(), ut, px, py, size)
 	}
 
 	return gf
@@ -351,8 +365,11 @@ func (ps *PlayScreen) openUnitPickerModal(g core.Game, category core.UnitCategor
 	}
 
 	picker.DrawCell = func(dst *ebiten.Image, cx, cy, px, py, size int, payload any) {
-		ut := payload.(core.UnitType)
-		drawUnitImage(dst, g.Assets(), ut, px, py, 60)
+		ut, ok := payload.(core.UnitType)
+		if !ok {
+			return
+		}
+		drawUnitImage(dst, g.Assets(), ut, px, py, size)
 	}
 
 	closeBtn := GUI.MakeButton(px+pw-110, py+ph-60, 90, 40, "Close", func() {

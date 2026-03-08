@@ -28,10 +28,3 @@ func (ps *PlayScreen) makePlaceUnitSection(g core.Game) core.Widget {
 		grid,
 	})
 }
-
-func (ps *PlayScreen) rebuildLeftSidebar(g core.Game) {
-	ps.ui.widgets = nil
-	ps.ui.widgets = append(ps.ui.widgets,
-		ps.makeOptionsSidebar(g), // or whatever you call it
-	)
-}

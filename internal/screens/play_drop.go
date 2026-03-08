@@ -14,7 +14,7 @@ func (ps *PlayScreen) handleDrop(g core.Game, mx, my int) (bool, string) {
 			return false, "drop off board"
 		}
 
-		if ps.formationFits(cx, cy) {
+		if ps.formationFits(g, f, cx, cy) {
 			ps.deployFormation(g, f, cx, cy)
 			return true, "formation deployed"
 		}

@@ -65,6 +65,17 @@ func drawUnitImage(screen *ebiten.Image, assets core.Assets, unitType core.UnitT
 	op.GeoM.Translate(float64(px), float64(py))
 	screen.DrawImage(img, op)
 }
+func drawCategoryImage(screen *ebiten.Image, assets core.Assets, categoryType core.UnitCategory, px, py, cellSize int) {
+	img := assets.CategoryImage(categoryType)
+	if img == nil {
+		return
+	}
+	sw, sh := img.Bounds().Dx(), img.Bounds().Dy()
+	op := &ebiten.DrawImageOptions{}
+	op.GeoM.Scale(float64(cellSize)/float64(sw), float64(cellSize)/float64(sh))
+	op.GeoM.Translate(float64(px), float64(py))
+	screen.DrawImage(img, op)
+}
 
 func (ps *PlayScreen) drawDraggedUnit(g core.Game, screen *ebiten.Image) {
 	if !ps.drag.Active || ps.drag.Payload == nil {

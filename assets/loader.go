@@ -33,6 +33,11 @@ func MustLoadAll() core.Assets {
 			core.Soldier:   mustImage("soldier.png"),
 			core.Commander: mustImage("commander.png"),
 		},
+		CategoryImages: map[core.UnitCategory]*ebiten.Image{
+			core.Attack:  mustImage("attack.png"),
+			core.Defense: mustImage("defense.png"),
+			core.Support: mustImage("support.png"),
+		},
 	}
 }
 

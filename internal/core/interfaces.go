@@ -15,8 +15,6 @@ type Game interface {
 	LocalPlayer() *Player
 	TurnPlayer() *Player
 	NextTurn()
-
-	//MakeBoard() //
 }
 
 type Screen interface {
