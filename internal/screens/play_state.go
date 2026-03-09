@@ -14,7 +14,7 @@ type PlayScreen struct {
 	drag interaction.DragState
 }
 
-func (ps *PlayScreen) buildUI(g core.Game) {
+func (ps *PlayScreen) buildSetupUI(g core.Game) {
 
 	ps.ui.widgets = []core.Widget{
 		ps.makeOptionsSidebar(g),
@@ -22,14 +22,18 @@ func (ps *PlayScreen) buildUI(g core.Game) {
 	}
 
 }
+func (ps *PlayScreen) buildBattleUI(g core.Game) {
 
+}
+func (ps *PlayScreen) swapAndResetUI(build func(core.Game), g core.Game) {
+	ps.ui.widgets = nil
+	ps.ui.modal = nil
+	ps.ui.overlay = nil
+	build(g)
+}
 func NewPlayScreen(g core.Game) *PlayScreen {
 	ps := &PlayScreen{}
-
-	ps.initSetupState(g)
-	ps.initFormationState(g)
-	ps.buildUI(g)
-
+	ps.enterSetup(g)
 	return ps
 }
 
@@ -44,4 +48,16 @@ func (ps *PlayScreen) initSetupState(g core.Game) {
 func (ps *PlayScreen) initFormationState(g core.Game) {
 	ps.formation.formationBrushUnitType = core.Soldier
 	ps.formation.formationWants = map[core.Pos]core.UnitType{}
+}
+
+func (ps *PlayScreen) enterSetup(g core.Game) {
+	ps.initSetupState(g)
+	ps.initFormationState(g)
+	ps.swapAndResetUI(ps.buildSetupUI, g)
+}
+
+func (ps *PlayScreen) enterBattle(g core.Game) {
+	ps.drag.Active = false
+	ps.swapAndResetUI(ps.buildBattleUI, g)
+	ps.spawnEnemySetup(g)
 }

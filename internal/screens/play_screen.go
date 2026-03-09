@@ -29,4 +29,5 @@ func (ps *PlayScreen) Draw(g core.Game, screen *ebiten.Image) {
 	ps.drawModal(screen)
 	ps.drawDraggedUnit(g, screen)
 	ps.drawDebug(screen)
+	ps.drawHoveredUnitInfo(g, screen)
 }

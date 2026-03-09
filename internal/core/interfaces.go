@@ -15,6 +15,7 @@ type Game interface {
 	LocalPlayer() *Player
 	TurnPlayer() *Player
 	NextTurn()
+	InitializeStartingUnitsEnemy(playerId int) []*Unit
 }
 
 type Screen interface {

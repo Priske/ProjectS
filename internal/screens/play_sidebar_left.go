@@ -13,6 +13,7 @@ func (ps *PlayScreen) makeOptionsSidebar(g core.Game) core.Widget {
 
 	placeUnit := ps.makePlaceUnitSection(g)
 	formation := ps.makeFormationSection(g)
+
 	exit := GUI.MakeButton(0, 0, 240, 50, "Save & Quit", func() {
 		g.SetScreen(NewMenuScreen(g))
 	})
@@ -22,9 +23,10 @@ func (ps *PlayScreen) makeOptionsSidebar(g core.Game) core.Widget {
 }
 
 func (ps *PlayScreen) makePlaceUnitSection(g core.Game) core.Widget {
+	widgets := []core.Widget{}
 	ps.reserve.grid = ps.makeUnitsGrid(g)
 	grid := ps.reserve.grid
-	return GUI.MakeCollapsible(0, 0, 240, 50, "Place Unit . . .", []core.Widget{
-		grid,
-	})
+
+	widgets = append(widgets, grid)
+	return GUI.MakeCollapsible(0, 0, 240, 50, "Place Unit . . .", widgets)
 }

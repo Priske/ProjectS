@@ -153,7 +153,7 @@ func (ps *PlayScreen) drawBackground(screen *ebiten.Image) {
 func (ps *PlayScreen) drawBoard(g core.Game, screen *ebiten.Image) {
 	s := g.Settings()
 	offX, offY := getOffXY(g)
-
+	ps.drawBoardTiles(g, screen, offX, offY, s.CellSize)
 	if ps.setup.setupMode {
 		drawPlacementZone(screen, offX, offY, s.BoardH, s.CellSize, 3)
 	}
@@ -167,5 +167,46 @@ func (ps *PlayScreen) drawModal(screen *ebiten.Image) {
 	}
 	if ps.ui.overlay != nil {
 		ps.ui.overlay.Draw(screen)
+	}
+}
+func (ps *PlayScreen) drawHoveredUnitInfo(g core.Game, screen *ebiten.Image) {
+	if !ebiten.IsKeyPressed(ebiten.KeyControl) {
+		return
+	}
+	if info, ok := ps.hoveredBoardUnitInfo(g); ok {
+		drawUnitInfoCard(screen, g, info)
+		return
+	}
+
+	if info, ok := ps.hoveredReserveUnitInfo(g); ok {
+		drawUnitInfoCard(screen, g, info)
+	}
+}
+func (ps *PlayScreen) drawBoardTiles(g core.Game, screen *ebiten.Image, offX, offY, cellSize int) {
+	s := g.Settings()
+	board := g.Board()
+	assets := g.Assets()
+
+	for y := 0; y < s.BoardH; y++ {
+		for x := 0; x < s.BoardW; x++ {
+			tile := board.Location[y][x]
+
+			img := assets.LocationImage(tile.LocationType)
+			if img == nil {
+				continue
+			}
+
+			op := &ebiten.DrawImageOptions{}
+			op.GeoM.Scale(
+				float64(cellSize)/float64(img.Bounds().Dx()),
+				float64(cellSize)/float64(img.Bounds().Dy()),
+			)
+			op.GeoM.Translate(
+				float64(offX+x*cellSize),
+				float64(offY+y*cellSize),
+			)
+
+			screen.DrawImage(img, op)
+		}
 	}
 }

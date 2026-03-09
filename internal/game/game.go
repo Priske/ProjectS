@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"math/rand"
 
 	"github.com/Priske/ProjectS/assets"
 	"github.com/Priske/ProjectS/internal/core"
@@ -38,12 +39,38 @@ using data as a 1 dimensional representation to enhance performance,
 incase performance is important later on. tldr; data holds all tiles,
 forloop assigns matrices to the data[0:5], data[5:10],data[10:15],..
 */
+/*
 func MakeBoard(boardH, boardW int) core.GameBoard {
 	data := make([]core.Tile, boardH*boardW)
 	board := make([][]core.Tile, boardH)
 
 	for i := 0; i < boardH; i++ {
 		board[i] = data[i*boardW : (i+1)*boardW]
+	}
+
+	return core.GameBoard{
+		Location: board,
+	}
+}
+*/
+func randomTileType() core.LocationType {
+	return core.LocationType(int(core.Tile_01) + rand.Intn(16))
+}
+
+func MakeBoard(boardH, boardW int) core.GameBoard {
+	data := make([]core.Tile, boardH*boardW)
+	board := make([][]core.Tile, boardH)
+
+	for i := 0; i < boardH; i++ {
+		board[i] = data[i*boardW : (i+1)*boardW]
+	}
+
+	for y := 0; y < boardH; y++ {
+		for x := 0; x < boardW; x++ {
+			board[y][x] = core.Tile{
+				LocationType: randomTileType(),
+			}
+		}
 	}
 
 	return core.GameBoard{
@@ -161,7 +188,7 @@ func (g *Game) InitializeNewGame(localPlayerID int) {
 	// Opponent (bot/placeholder for now)
 	opponentID := -1
 	opponent := &core.Player{Playerid: opponentID}
-	opponent.Units = g.InitializeStartingUnits(opponentID)
+	opponent.Units = g.InitializeStartingUnitsEnemy(opponentID)
 
 	g.players = append(g.players, local, opponent)
 
@@ -177,5 +204,13 @@ func (g *Game) InitializeStartingUnits(playerId int) []*core.Unit {
 		core.MakeNewSoldier(playerId, g.NewUnitID()),
 		core.MakeNewSoldier(playerId, g.NewUnitID()),
 		core.MakeNewCommander(playerId, g.NewUnitID()),
+	}
+}
+func (g *Game) InitializeStartingUnitsEnemy(playerId int) []*core.Unit {
+	return []*core.Unit{
+		core.MakeNewEnemyCultistKnife(playerId, g.NewUnitID()),
+		core.MakeNewEnemyCultistKnife(playerId, g.NewUnitID()),
+		core.MakeNewEnemyCultistKnife(playerId, g.NewUnitID()),
+		core.MakeNewEnemyCultistLord(playerId, g.NewUnitID()),
 	}
 }

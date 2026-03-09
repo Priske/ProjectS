@@ -49,12 +49,16 @@ func (ps *PlayScreen) formationFits(g core.Game, f *core.Formation, cx, cy int) 
 
 	return true
 }
-func (ps *PlayScreen) deployFormation(g core.Game, f *core.Formation, cx, cy int) {
+
+func (ps *PlayScreen) deployFormation(g core.Game, f *core.Formation, cx, cy int, available []*core.Unit) []*core.Unit {
+
 	board := g.Board()
-	available := append([]*core.Unit{}, ps.setup.unPlacedUnits...)
+
+	available = append([]*core.Unit{}, available...)
 
 	for pos, ut := range f.Wants {
 		bx, by := formationBoardCell(f, cx, cy, pos)
+
 		if by < 0 || by >= len(board.Location) {
 			continue
 		}
@@ -82,5 +86,5 @@ func (ps *PlayScreen) deployFormation(g core.Game, f *core.Formation, cx, cy int
 		board.Location[by][bx].Unit = unit
 	}
 
-	ps.setup.unPlacedUnits = available
+	return available
 }

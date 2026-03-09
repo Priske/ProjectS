@@ -36,6 +36,8 @@ func (ps *PlayScreen) resetSetupState(g core.Game) {
 
 func (ps *PlayScreen) confirmSetup(g core.Game) {
 	ps.setup.setupMode = false
+	ps.enterBattle(g)
+
 }
 
 func (ps *PlayScreen) canPlaceSetupUnit(toX int) bool {

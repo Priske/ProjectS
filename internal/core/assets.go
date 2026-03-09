@@ -7,6 +7,7 @@ import (
 type Assets struct {
 	UnitImages     map[UnitType]*ebiten.Image
 	CategoryImages map[UnitCategory]*ebiten.Image
+	LocationImages map[LocationType]*ebiten.Image
 }
 
 func (a *Assets) UnitImage(t UnitType) *ebiten.Image {
@@ -20,4 +21,11 @@ func (a *Assets) CategoryImage(t UnitCategory) *ebiten.Image {
 		return nil
 	}
 	return a.CategoryImages[t]
+}
+
+func (a *Assets) LocationImage(l LocationType) *ebiten.Image {
+	if a == nil || a.LocationImages == nil {
+		return nil
+	}
+	return a.LocationImages[l]
 }

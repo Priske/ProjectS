@@ -15,7 +15,7 @@ func (ps *PlayScreen) handleDrop(g core.Game, mx, my int) (bool, string) {
 		}
 
 		if ps.formationFits(g, f, cx, cy) {
-			ps.deployFormation(g, f, cx, cy)
+			ps.setup.unPlacedUnits = ps.deployFormation(g, f, cx, cy, ps.setup.unPlacedUnits)
 			return true, "formation deployed"
 		}
 

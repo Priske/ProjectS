@@ -1,6 +1,10 @@
 package screens
 
-import "github.com/Priske/ProjectS/internal/core"
+import (
+	"math/rand"
+
+	"github.com/Priske/ProjectS/internal/core"
+)
 
 func getOffXY(g core.Game) (int, int) {
 	s := g.Settings()
@@ -29,9 +33,11 @@ func abs(x int) int {
 func unitTypesFor(cat core.UnitCategory) []core.UnitType {
 	switch cat {
 	case core.Attack:
-		return []core.UnitType{core.Soldier, core.Commander}
+		return []core.UnitType{core.Soldier, core.Commander, core.Sniper}
 	case core.Defense:
-		return []core.UnitType{ /* later */ }
+		return []core.UnitType{core.Shield, core.Razor}
+	case core.Support:
+		return []core.UnitType{core.Medic}
 	default:
 		return nil
 	}
@@ -116,4 +122,8 @@ func formationOrigin(f *core.Formation) (minX, minY int) {
 func formationBoardCell(f *core.Formation, cx, cy int, pos core.Pos) (bx, by int) {
 	ox, oy := formationOrigin(f)
 	return cx + (pos.X - ox), cy + (pos.Y - oy)
+}
+
+func randomTileType() core.LocationType {
+	return core.LocationType(int(core.Tile_01) + rand.Intn(16))
 }
