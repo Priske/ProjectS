@@ -34,25 +34,6 @@ func GetScreenWidthAndHeight(g *Game) (int, int) {
 	return w, h
 }
 
-/*
-using data as a 1 dimensional representation to enhance performance,
-incase performance is important later on. tldr; data holds all tiles,
-forloop assigns matrices to the data[0:5], data[5:10],data[10:15],..
-*/
-/*
-func MakeBoard(boardH, boardW int) core.GameBoard {
-	data := make([]core.Tile, boardH*boardW)
-	board := make([][]core.Tile, boardH)
-
-	for i := 0; i < boardH; i++ {
-		board[i] = data[i*boardW : (i+1)*boardW]
-	}
-
-	return core.GameBoard{
-		Location: board,
-	}
-}
-*/
 func randomTileType() core.LocationType {
 	return core.LocationType(int(core.Tile_01) + rand.Intn(16))
 }

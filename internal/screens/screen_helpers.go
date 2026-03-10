@@ -1,8 +1,6 @@
 package screens
 
 import (
-	"math/rand"
-
 	"github.com/Priske/ProjectS/internal/core"
 )
 
@@ -124,6 +122,35 @@ func formationBoardCell(f *core.Formation, cx, cy int, pos core.Pos) (bx, by int
 	return cx + (pos.X - ox), cy + (pos.Y - oy)
 }
 
-func randomTileType() core.LocationType {
-	return core.LocationType(int(core.Tile_01) + rand.Intn(16))
+func normalizeFormationWants(wants map[core.Pos]core.UnitType) map[core.Pos]core.UnitType {
+	if len(wants) == 0 {
+		return map[core.Pos]core.UnitType{}
+	}
+
+	first := true
+	minX, minY := 0, 0
+
+	for pos := range wants {
+		if first {
+			minX, minY = pos.X, pos.Y
+			first = false
+			continue
+		}
+		if pos.X < minX {
+			minX = pos.X
+		}
+		if pos.Y < minY {
+			minY = pos.Y
+		}
+	}
+
+	out := make(map[core.Pos]core.UnitType, len(wants))
+	for pos, ut := range wants {
+		out[core.Pos{
+			X: pos.X - minX,
+			Y: pos.Y - minY,
+		}] = ut
+	}
+
+	return out
 }

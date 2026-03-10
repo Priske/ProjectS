@@ -7,24 +7,34 @@ import (
 
 func (ps *PlayScreen) Update(g core.Game) error {
 	input := g.Input()
+
 	ps.updateDragCursor(input)
-	ps.updateSetupWidgets(g)
 
 	if ps.handleModalUpdate(g, input) {
 		return nil
 	}
 
+	if ps.battle.Active {
+		ps.updateBattle(g)
+		return nil
+	}
+
+	ps.updateSetupWidgets(g)
+
 	for _, w := range ps.ui.widgets {
 		w.Update(input)
 	}
+
 	ps.tryStartBoardDrag(g, input)
 	ps.tryFinishDrag(g, input)
+
 	return nil
 }
-
 func (ps *PlayScreen) Draw(g core.Game, screen *ebiten.Image) {
 	ps.drawBackground(screen)
 	ps.drawBoard(g, screen)
+	ps.drawSelectedUnitHighlight(g, screen)
+	ps.drawMoveRange(g, screen)
 	ps.drawUI(screen)
 	ps.drawModal(screen)
 	ps.drawDraggedUnit(g, screen)

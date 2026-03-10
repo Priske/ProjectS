@@ -209,9 +209,8 @@ func (ps *PlayScreen) openFormationNamePrompt(g core.Game) {
 			Name:  name,
 			W:     3,
 			H:     5,
-			Wants: copyFormationWants(ps.formation.formationWants),
+			Wants: normalizeFormationWants(copyFormationWants(ps.formation.formationWants)),
 		}
-
 		g.LocalPlayer().Formations = append(g.LocalPlayer().Formations, newFormation)
 
 		ps.ui.overlay = nil

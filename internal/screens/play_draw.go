@@ -210,3 +210,73 @@ func (ps *PlayScreen) drawBoardTiles(g core.Game, screen *ebiten.Image, offX, of
 		}
 	}
 }
+func (ps *PlayScreen) drawBattleLog(screen *ebiten.Image, g core.Game) {
+	if !ps.battle.Active {
+		return
+	}
+
+	// location of log panel
+	x := 1000 + 20
+	y := 40
+
+	for i, line := range ps.battle.Log {
+		ebitenutil.DebugPrintAt(screen, line, x, y+i*14)
+	}
+}
+
+func (ps *PlayScreen) drawSelectedUnitHighlight(g core.Game, screen *ebiten.Image) {
+	if !ps.battle.Active || ps.battle.Selected == nil {
+		return
+	}
+
+	px, py := cellTopLeft(g, ps.battle.SelectedX, ps.battle.SelectedY)
+	size := g.Settings().CellSize
+
+	ebitenutil.DrawRect(screen, float64(px), float64(py), float64(size), 2, color.RGBA{255, 255, 0, 255})
+	ebitenutil.DrawRect(screen, float64(px), float64(py+size-2), float64(size), 2, color.RGBA{255, 255, 0, 255})
+	ebitenutil.DrawRect(screen, float64(px), float64(py), 2, float64(size), color.RGBA{255, 255, 0, 255})
+	ebitenutil.DrawRect(screen, float64(px+size-2), float64(py), 2, float64(size), color.RGBA{255, 255, 0, 255})
+}
+func (ps *PlayScreen) drawMoveRange(g core.Game, screen *ebiten.Image) {
+	if !ps.battle.Active || ps.battle.Selected == nil {
+		return
+	}
+
+	board := g.Board()
+	size := g.Settings().CellSize
+
+	x := ps.battle.SelectedX
+	y := ps.battle.SelectedY
+
+	cells := []core.Pos{
+		{X: x + 1, Y: y},
+		{X: x - 1, Y: y},
+		{X: x, Y: y + 1},
+		{X: x, Y: y - 1},
+	}
+
+	for _, c := range cells {
+
+		// bounds check
+		if c.Y < 0 || c.Y >= len(board.Location) {
+			continue
+		}
+		if c.X < 0 || c.X >= len(board.Location[c.Y]) {
+			continue
+		}
+
+		// occupied check
+		if board.Location[c.Y][c.X].Unit != nil {
+			continue
+		}
+
+		px, py := cellTopLeft(g, c.X, c.Y)
+
+		col := color.RGBA{0, 255, 0, 255}
+
+		ebitenutil.DrawRect(screen, float64(px), float64(py), float64(size), 2, col)
+		ebitenutil.DrawRect(screen, float64(px), float64(py+size-2), float64(size), 2, col)
+		ebitenutil.DrawRect(screen, float64(px), float64(py), 2, float64(size), col)
+		ebitenutil.DrawRect(screen, float64(px+size-2), float64(py), 2, float64(size), col)
+	}
+}

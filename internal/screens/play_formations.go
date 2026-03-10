@@ -55,7 +55,7 @@ func (ps *PlayScreen) deployFormation(g core.Game, f *core.Formation, cx, cy int
 	board := g.Board()
 
 	available = append([]*core.Unit{}, available...)
-
+	println("deploy anchor", cx, cy)
 	for pos, ut := range f.Wants {
 		bx, by := formationBoardCell(f, cx, cy, pos)
 
@@ -87,4 +87,30 @@ func (ps *PlayScreen) deployFormation(g core.Game, f *core.Formation, cx, cy int
 	}
 
 	return available
+}
+
+func (ps *PlayScreen) makeUnitFromType(g core.Game, playerID int, ut core.UnitType) *core.Unit {
+	switch ut {
+	case core.Enemy_cultist_knife:
+		return core.MakeNewEnemyCultistKnife(playerID, g.NewUnitID())
+
+	case core.Enemy_cultist_lord:
+		return core.MakeNewEnemyCultistLord(playerID, g.NewUnitID())
+
+	default:
+		return nil
+	}
+}
+
+func (ps *PlayScreen) createUnitsForFormation(g core.Game, playerID int, f *core.Formation) []*core.Unit {
+	units := []*core.Unit{}
+
+	for _, ut := range f.Wants {
+		u := ps.makeUnitFromType(g, playerID, ut)
+		if u != nil {
+			units = append(units, u)
+		}
+	}
+
+	return units
 }
