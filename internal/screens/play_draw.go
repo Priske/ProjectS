@@ -241,42 +241,47 @@ func (ps *PlayScreen) drawMoveRange(g core.Game, screen *ebiten.Image) {
 	if !ps.battle.Active || ps.battle.Selected == nil {
 		return
 	}
+	if ps.battle.Turn.Side != TurnPlayer {
+		return
+	}
+	if !ps.battle.Turn.CanMove(ps.battle.Selected) {
+		return
+	}
 
 	board := g.Board()
 	size := g.Settings().CellSize
 
 	x := ps.battle.SelectedX
 	y := ps.battle.SelectedY
+	r := ps.battle.Selected.MoveRange
 
-	cells := []core.Pos{
-		{X: x + 1, Y: y},
-		{X: x - 1, Y: y},
-		{X: x, Y: y + 1},
-		{X: x, Y: y - 1},
-	}
+	for dx := -r; dx <= r; dx++ {
+		for dy := -r; dy <= r; dy++ {
+			dist := abs(dx) + abs(dy)
+			if dist == 0 || dist > r {
+				continue
+			}
 
-	for _, c := range cells {
+			cx := x + dx
+			cy := y + dy
 
-		// bounds check
-		if c.Y < 0 || c.Y >= len(board.Location) {
-			continue
+			if cy < 0 || cy >= len(board.Location) {
+				continue
+			}
+			if cx < 0 || cx >= len(board.Location[cy]) {
+				continue
+			}
+			if board.Location[cy][cx].Unit != nil {
+				continue
+			}
+
+			px, py := cellTopLeft(g, cx, cy)
+			col := color.RGBA{0, 255, 0, 255}
+
+			ebitenutil.DrawRect(screen, float64(px), float64(py), float64(size), 2, col)
+			ebitenutil.DrawRect(screen, float64(px), float64(py+size-2), float64(size), 2, col)
+			ebitenutil.DrawRect(screen, float64(px), float64(py), 2, float64(size), col)
+			ebitenutil.DrawRect(screen, float64(px+size-2), float64(py), 2, float64(size), col)
 		}
-		if c.X < 0 || c.X >= len(board.Location[c.Y]) {
-			continue
-		}
-
-		// occupied check
-		if board.Location[c.Y][c.X].Unit != nil {
-			continue
-		}
-
-		px, py := cellTopLeft(g, c.X, c.Y)
-
-		col := color.RGBA{0, 255, 0, 255}
-
-		ebitenutil.DrawRect(screen, float64(px), float64(py), float64(size), 2, col)
-		ebitenutil.DrawRect(screen, float64(px), float64(py+size-2), float64(size), 2, col)
-		ebitenutil.DrawRect(screen, float64(px), float64(py), 2, float64(size), col)
-		ebitenutil.DrawRect(screen, float64(px+size-2), float64(py), 2, float64(size), col)
 	}
 }

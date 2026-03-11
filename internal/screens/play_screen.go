@@ -14,17 +14,19 @@ func (ps *PlayScreen) Update(g core.Game) error {
 		return nil
 	}
 
-	if ps.battle.Active {
-		ps.updateBattle(g)
-		return nil
-	}
-
-	ps.updateSetupWidgets(g)
-
 	for _, w := range ps.ui.widgets {
 		w.Update(input)
 	}
 
+	if ps.battle.Active {
+		ps.updateBattle(g)
+		ps.tryStartBoardDrag(g, input)
+		ps.tryFinishDrag(g, input)
+		return nil
+
+	}
+
+	ps.updateSetupWidgets(g)
 	ps.tryStartBoardDrag(g, input)
 	ps.tryFinishDrag(g, input)
 

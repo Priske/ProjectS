@@ -60,12 +60,3 @@ func (ps *PlayScreen) enterSetup(g core.Game) {
 	ps.initFormationState(g)
 	ps.swapAndResetUI(ps.buildSetupUI, g)
 }
-
-/*
-func (ps *PlayScreen) enterBattle(g core.Game) {
-	ps.drag.Active = false
-	ps.swapAndResetUI(ps.buildBattleUI, g)
-	ps.spawnEnemySetup(g)
-
-}
-*/

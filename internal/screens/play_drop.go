@@ -34,6 +34,11 @@ func (ps *PlayScreen) handleDrop(g core.Game, mx, my int) (bool, string) {
 		return false, "drop off board"
 	}
 
+	// battle has its own movement/attack legality
+	if ps.battle.Active {
+		return ps.handleBattleDrop(g, mx, my)
+	}
+
 	board := g.Board()
 	dst := board.TilePtr(toX, toY)
 	if dst == nil {
@@ -137,4 +142,38 @@ func (ps *PlayScreen) handleFormationDrop(g core.Game, mx, my int) (bool, string
 
 	ps.formation.formationWants[core.Pos{X: cx, Y: cy}] = ut
 	return true, "placed in formation"
+}
+
+func (ps *PlayScreen) handleBattleDrop(g core.Game, mx, my int) (bool, string) {
+	if ps.drag.Source != interaction.DragFromBoard {
+		return false, "invalid battle drag"
+	}
+
+	toX, toY, ok := mouseToCell(g, mx, my)
+	if !ok {
+		return false, "drop off board"
+	}
+
+	fromX, fromY := ps.drag.FromX, ps.drag.FromY
+	if toX == fromX && toY == fromY {
+		return false, "same cell"
+	}
+
+	board := g.Board()
+	if fromY < 0 || fromY >= len(board.Location) || fromX < 0 || fromX >= len(board.Location[fromY]) {
+		return false, "invalid source"
+	}
+
+	src := &board.Location[fromY][fromX]
+	if src.Unit == nil {
+		return false, "no src unit"
+	}
+
+	u := src.Unit
+
+	if ps.tryMoveUnit(g, u, fromX, fromY, toX, toY) {
+		return true, "moved"
+	}
+
+	return false, "illegal move"
 }

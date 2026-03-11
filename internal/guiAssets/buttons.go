@@ -32,12 +32,20 @@ func MakeButton(x, y, w, h int, txt string, Onclick func()) core.Widget {
 }
 
 func (b *Button) Draw(dst *ebiten.Image) {
-	col := color.RGBA{80, 80, 95, 255}
-	if b.hovered {
-		col = color.RGBA{110, 110, 130, 255}
-	}
-	ebitenutil.DrawRect(dst, float64(b.X), float64(b.Y), float64(b.W), float64(b.H), col)
-	ebitenutil.DebugPrintAt(dst, b.Text, b.X+20, b.Y+18)
+
+	ebitenutil.DrawRect(dst,
+		float64(b.X), float64(b.Y),
+		float64(b.W), float64(b.H),
+		color.RGBA{80, 80, 90, 255},
+	)
+
+	textW := len(b.Text) * 7
+	textH := 12
+
+	textX := b.X + (b.W-textW)/2
+	textY := b.Y + (b.H-textH)/2
+
+	ebitenutil.DebugPrintAt(dst, b.Text, textX, textY)
 }
 func (b *Button) Update(input core.Input) {
 	b.hovered = core.PointInBounds(input.MX, input.MY, b)

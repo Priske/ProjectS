@@ -17,9 +17,10 @@ type Panel struct {
 	Background     color.Color
 	Border         color.Color
 
-	Children []core.Widget
-	Padding  int
-	Gap      int
+	Children   []core.Widget
+	Padding    int
+	Gap        int
+	AutoLayout bool
 }
 
 func MakePanel(x, y, w, h int, title string, children []core.Widget) *Panel {
@@ -36,6 +37,7 @@ func MakePanel(x, y, w, h int, title string, children []core.Widget) *Panel {
 		Children:       children,
 		Padding:        10,
 		Gap:            8,
+		AutoLayout:     true,
 	}
 }
 
@@ -71,7 +73,9 @@ func (p *Panel) layoutChildren() {
 }
 
 func (p *Panel) Update(in core.Input) {
-	p.layoutChildren()
+	if p.AutoLayout {
+		p.layoutChildren()
+	}
 
 	for _, child := range p.Children {
 		child.Update(in)
@@ -94,7 +98,9 @@ func (p *Panel) Draw(dst *ebiten.Image) {
 		ebitenutil.DebugPrintAt(dst, p.Title, p.X+p.Padding, p.Y+6)
 	}
 
-	p.layoutChildren()
+	if p.AutoLayout {
+		p.layoutChildren()
+	}
 
 	for _, child := range p.Children {
 		child.Draw(dst)
