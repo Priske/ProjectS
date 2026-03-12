@@ -15,6 +15,16 @@ type Unit struct {
 	Actions []UnitAction
 }
 
+type UnitTurnState struct {
+	RemainingMoveActions   int
+	RemainingAttackActions int
+
+	ActionUses map[string]int
+
+	TempMoveRangeBonus   int
+	TempAttackRangeBonus int
+}
+
 type UnitType int
 
 const (
@@ -48,6 +58,7 @@ func MakeNewSoldier(playerId, unitId int) *Unit {
 		MoveRange:            2,
 		MoveActionsPerTurn:   1,
 		AttackActionsPerTurn: 1,
+		Actions:              defaultSoldierActions(2, 1),
 	}
 }
 func MakeNewCommander(playerId, unitId int) *Unit {
@@ -61,6 +72,7 @@ func MakeNewCommander(playerId, unitId int) *Unit {
 		MoveRange:            1,
 		MoveActionsPerTurn:   1,
 		AttackActionsPerTurn: 1,
+		Actions:              defaultMeleeActions(1, 1),
 	}
 }
 
@@ -75,6 +87,7 @@ func MakeNewEnemyCultistKnife(playerId, unitId int) *Unit {
 		MoveRange:            3,
 		MoveActionsPerTurn:   1,
 		AttackActionsPerTurn: 1,
+		Actions:              defaultMeleeActions(3, 1),
 	}
 }
 func MakeNewEnemyCultistLord(playerId, unitId int) *Unit {
@@ -88,5 +101,6 @@ func MakeNewEnemyCultistLord(playerId, unitId int) *Unit {
 		MoveRange:            1,
 		MoveActionsPerTurn:   1,
 		AttackActionsPerTurn: 1,
+		Actions:              defaultMeleeActions(1, 1),
 	}
 }

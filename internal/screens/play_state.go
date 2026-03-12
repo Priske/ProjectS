@@ -3,16 +3,17 @@ package screens
 import (
 	"github.com/Priske/ProjectS/interaction"
 	"github.com/Priske/ProjectS/internal/core"
+	GUI "github.com/Priske/ProjectS/internal/guiAssets"
 )
 
 type PlayScreen struct {
-	formation FormationEditorState
-	setup     SetupState
-	ui        PlayUI
-	reserve   ReserveState
-	battle    BattleState
-
-	drag interaction.DragState
+	formation   FormationEditorState
+	setup       SetupState
+	ui          PlayUI
+	reserve     ReserveState
+	battle      BattleState
+	actionPopup *GUI.ContextPopup
+	drag        interaction.DragState
 }
 
 func (ps *PlayScreen) buildSetupUI(g core.Game) {
@@ -28,6 +29,10 @@ func (ps *PlayScreen) buildBattleUI(g core.Game) {
 
 	ps.ui.widgets = []core.Widget{
 		right,
+	}
+	ps.actionPopup = &GUI.ContextPopup{
+		W: 140,
+		H: 100,
 	}
 }
 func (ps *PlayScreen) swapAndResetUI(build func(core.Game), g core.Game) {

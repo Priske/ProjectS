@@ -1,6 +1,7 @@
 package screens
 
 import (
+	"fmt"
 	"image/color"
 
 	"github.com/Priske/ProjectS/internal/core"
@@ -284,4 +285,217 @@ func (ps *PlayScreen) drawMoveRange(g core.Game, screen *ebiten.Image) {
 			ebitenutil.DrawRect(screen, float64(px+size-2), float64(py), 2, float64(size), col)
 		}
 	}
+}
+
+func (ps *PlayScreen) drawActionMenu(g core.Game, screen *ebiten.Image) {
+	fmt.Println("draw Action menu")
+	if !ps.battle.Active || !ps.battle.ActionMenuOpen || ps.battle.Selected == nil {
+		return
+	}
+
+	u := ps.battle.Selected
+	x := ps.battle.ActionMenuX
+	y := ps.battle.ActionMenuY
+	w := 140
+	rowH := 22
+	h := len(u.Actions)*rowH + 8
+
+	ebitenutil.DrawRect(screen, float64(x), float64(y), float64(w), float64(h), color.RGBA{35, 35, 45, 255})
+
+	border := color.RGBA{90, 90, 110, 255}
+	ebitenutil.DrawRect(screen, float64(x), float64(y), float64(w), 1, border)
+	ebitenutil.DrawRect(screen, float64(x), float64(y+h-1), float64(w), 1, border)
+	ebitenutil.DrawRect(screen, float64(x), float64(y), 1, float64(h), border)
+	ebitenutil.DrawRect(screen, float64(x+w-1), float64(y), 1, float64(h), border)
+
+	for i := range u.Actions {
+		a := &u.Actions[i]
+		rowY := y + 4 + i*rowH
+
+		if ps.battle.SelectedAction != nil && ps.battle.SelectedAction.ID == a.ID {
+			ebitenutil.DrawRect(screen, float64(x+2), float64(rowY-1), float64(w-4), float64(rowH-2), color.RGBA{70, 70, 100, 255})
+		}
+
+		label := a.Name
+		if !ps.canUseAction(u, a) {
+			label = "X " + label
+		}
+
+		ebitenutil.DebugPrintAt(screen, label, x+8, rowY+4)
+	}
+}
+
+func (ps *PlayScreen) drawBattleActionCursor(g core.Game, screen *ebiten.Image) {
+	if !ps.battle.Active || ps.battle.SelectedAction == nil {
+		return
+	}
+
+	switch ps.battle.SelectedAction.Kind {
+	case core.ActionAttack:
+		ps.drawAttackCursor(g, screen)
+	}
+}
+
+func (ps *PlayScreen) drawAttackCursor(g core.Game, screen *ebiten.Image) {
+	if !ps.canAttackHoveredCell(g) {
+		return
+	}
+
+	in := g.Input()
+	cx, cy, ok := mouseToCell(g, in.MX, in.MY)
+	if !ok {
+		return
+	}
+
+	px, py := cellTopLeft(g, cx, cy)
+	size := g.Settings().CellSize
+	col := color.RGBA{255, 60, 60, 255}
+
+	cornerLen := size / 4
+	thick := 2
+
+	// top-left corner
+	ebitenutil.DrawRect(screen, float64(px), float64(py), float64(cornerLen), float64(thick), col)
+	ebitenutil.DrawRect(screen, float64(px), float64(py), float64(thick), float64(cornerLen), col)
+
+	// top-right corner
+	ebitenutil.DrawRect(screen, float64(px+size-cornerLen), float64(py), float64(cornerLen), float64(thick), col)
+	ebitenutil.DrawRect(screen, float64(px+size-thick), float64(py), float64(thick), float64(cornerLen), col)
+
+	// bottom-left corner
+	ebitenutil.DrawRect(screen, float64(px), float64(py+size-thick), float64(cornerLen), float64(thick), col)
+	ebitenutil.DrawRect(screen, float64(px), float64(py+size-cornerLen), float64(thick), float64(cornerLen), col)
+
+	// bottom-right corner
+	ebitenutil.DrawRect(screen, float64(px+size-cornerLen), float64(py+size-thick), float64(cornerLen), float64(thick), col)
+	ebitenutil.DrawRect(screen, float64(px+size-thick), float64(py+size-cornerLen), float64(thick), float64(cornerLen), col)
+
+	// small center dot
+	ebitenutil.DrawRect(
+		screen,
+		float64(px+size/2-1),
+		float64(py+size/2-1),
+		2,
+		2,
+		col,
+	)
+}
+
+func (ps *PlayScreen) canAttackHoveredCell(g core.Game) bool {
+	if ps.battle.Selected == nil || ps.battle.SelectedAction == nil {
+		return false
+	}
+
+	in := g.Input()
+	cx, cy, ok := mouseToCell(g, in.MX, in.MY)
+	if !ok {
+		return false
+	}
+
+	board := g.Board()
+	if cy < 0 || cy >= len(board.Location) || cx < 0 || cx >= len(board.Location[cy]) {
+		return false
+	}
+
+	u := board.Location[cy][cx].Unit
+	if u == nil {
+		return false
+	}
+	if u.Playerid == ps.battle.Selected.Playerid {
+		return false
+	}
+
+	fromX := ps.battle.SelectedX
+	fromY := ps.battle.SelectedY
+	dist := abs(cx-fromX) + abs(cy-fromY)
+
+	return dist > 0 && dist <= ps.battle.SelectedAction.Range
+}
+func (ps *PlayScreen) drawSelectedActionOverlay(g core.Game, screen *ebiten.Image) {
+	if !ps.battle.Active || ps.battle.SelectedAction == nil {
+		return
+	}
+
+	switch ps.battle.SelectedAction.Kind {
+	case core.ActionMove:
+		ps.drawMoveRange(g, screen)
+	case core.ActionAttack:
+		ps.drawAttackRange(g, screen)
+		ps.drawAttackTargetLine(g, screen)
+		ps.drawAttackCursor(g, screen)
+	}
+}
+
+func (ps *PlayScreen) drawAttackRange(g core.Game, screen *ebiten.Image) {
+	if !ps.battle.Active || ps.battle.Selected == nil || ps.battle.SelectedAction == nil {
+		return
+	}
+	if ps.battle.SelectedAction.Kind != core.ActionAttack {
+		return
+	}
+
+	board := g.Board()
+	size := g.Settings().CellSize
+
+	x := ps.battle.SelectedX
+	y := ps.battle.SelectedY
+	r := ps.battle.SelectedAction.Range
+
+	for dx := -r; dx <= r; dx++ {
+		for dy := -r; dy <= r; dy++ {
+			dist := abs(dx) + abs(dy)
+			if dist == 0 || dist > r {
+				continue
+			}
+
+			cx := x + dx
+			cy := y + dy
+
+			if cy < 0 || cy >= len(board.Location) {
+				continue
+			}
+			if cx < 0 || cx >= len(board.Location[cy]) {
+				continue
+			}
+
+			u := board.Location[cy][cx].Unit
+			if u == nil {
+				continue
+			}
+			if u.Playerid == ps.battle.Selected.Playerid {
+				continue
+			}
+
+			px, py := cellTopLeft(g, cx, cy)
+			col := color.RGBA{255, 60, 60, 255}
+
+			ebitenutil.DrawRect(screen, float64(px), float64(py), float64(size), 2, col)
+			ebitenutil.DrawRect(screen, float64(px), float64(py+size-2), float64(size), 2, col)
+			ebitenutil.DrawRect(screen, float64(px), float64(py), 2, float64(size), col)
+			ebitenutil.DrawRect(screen, float64(px+size-2), float64(py), 2, float64(size), col)
+		}
+	}
+}
+
+func (ps *PlayScreen) drawAttackTargetLine(g core.Game, screen *ebiten.Image) {
+	if !ps.canAttackHoveredCell(g) || ps.battle.Selected == nil {
+		return
+	}
+
+	in := g.Input()
+	cx, cy, ok := mouseToCell(g, in.MX, in.MY)
+	if !ok {
+		return
+	}
+
+	sx, sy := cellTopLeft(g, ps.battle.SelectedX, ps.battle.SelectedY)
+	tx, ty := cellTopLeft(g, cx, cy)
+	size := g.Settings().CellSize
+
+	x1 := sx + size/2
+	y1 := sy + size/2
+	x2 := tx + size/2
+	y2 := ty + size/2
+
+	ebitenutil.DrawLine(screen, float64(x1), float64(y1), float64(x2), float64(y2), color.RGBA{255, 60, 60, 180})
 }

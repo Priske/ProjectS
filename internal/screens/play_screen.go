@@ -35,6 +35,7 @@ func (ps *PlayScreen) Update(g core.Game) error {
 func (ps *PlayScreen) Draw(g core.Game, screen *ebiten.Image) {
 	ps.drawBackground(screen)
 	ps.drawBoard(g, screen)
+	ps.drawSelectedActionOverlay(g, screen)
 	ps.drawSelectedUnitHighlight(g, screen)
 	ps.drawMoveRange(g, screen)
 	ps.drawUI(screen)
@@ -42,4 +43,8 @@ func (ps *PlayScreen) Draw(g core.Game, screen *ebiten.Image) {
 	ps.drawDraggedUnit(g, screen)
 	ps.drawDebug(screen)
 	ps.drawHoveredUnitInfo(g, screen)
+	if ps.actionPopup != nil {
+		ps.actionPopup.Draw(screen)
+	}
+
 }

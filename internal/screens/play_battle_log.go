@@ -32,3 +32,12 @@ func (w *BattleLogWidget) Draw(dst *ebiten.Image) {
 		ebitenutil.DebugPrintAt(dst, line, w.X+10, w.Y+28+i*16)
 	}
 }
+
+func (ps *PlayScreen) addBattleLog(line string) {
+	ps.battle.Log = append(ps.battle.Log, line)
+
+	const maxLog = 30
+	if len(ps.battle.Log) > maxLog {
+		ps.battle.Log = ps.battle.Log[len(ps.battle.Log)-maxLog:]
+	}
+}
