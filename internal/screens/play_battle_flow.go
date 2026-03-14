@@ -49,6 +49,14 @@ func (ps *PlayScreen) endEnemyTurn(g core.Game) {
 
 func (ps *PlayScreen) updateBattle(g core.Game) {
 	in := g.Input()
+	if ps.ui.modal != nil && ps.ui.modal.Open {
+		ps.ui.modal.Update(g.Input())
+		return
+	}
+
+	if ps.resolveBattleResult(g) {
+		return
+	}
 
 	// Enemy turn runs automatically
 	if ps.battle.Turn.Side == TurnEnemy {
@@ -176,17 +184,4 @@ func (ps *PlayScreen) updateBattle(g core.Game) {
 		}
 		return
 	}
-}
-
-func (ps *PlayScreen) runEnemyTurn(g core.Game) {
-	enemies := ps.enemyUnitsOnBoard(g)
-
-	for _, e := range enemies {
-		if ps.enemyTryAttackAdjacent(g, e.X, e.Y) {
-			continue
-		}
-		ps.enemyTryMoveTowardPlayer(g, e.X, e.Y)
-	}
-
-	ps.endEnemyTurn(g)
 }

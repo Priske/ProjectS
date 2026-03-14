@@ -1,7 +1,6 @@
 package guiassets
 
 import (
-	"fmt"
 	"image/color"
 
 	"github.com/Priske/ProjectS/internal/core"
@@ -36,9 +35,6 @@ func (p *ContextPopup) Update(in core.Input) {
 }
 
 func (p *ContextPopup) Draw(dst *ebiten.Image) {
-	fmt.Printf("draw open=%v x=%d y=%d w=%d h=%d drawfn_nil=%v\n",
-		p.Open, p.X, p.Y, p.W, p.H, p.DrawFn == nil,
-	)
 
 	if !p.Open || p.DrawFn == nil {
 		return

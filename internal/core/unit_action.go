@@ -50,21 +50,34 @@ func defaultMeleeActions(moveRange int, attackUses int) []UnitAction {
 		},
 		{
 			ID:          "basic_attack",
-			Name:        "Attack",
+			Name:        "Pistol",
 			Kind:        ActionAttack,
 			Range:       1,
 			Power:       0,
 			UsesPerTurn: attackUses,
 			Description: "Basic melee attack",
 		},
+	}
+}
+func defaultCultistMeleeActions(moveRange int, attackUses int) []UnitAction {
+	return []UnitAction{
 		{
-			ID:          "wait",
-			Name:        "Wait",
-			Kind:        ActionWait,
-			Range:       0,
+			ID:          "move",
+			Name:        "Move",
+			Kind:        ActionMove,
+			Range:       moveRange,
 			Power:       0,
 			UsesPerTurn: 1,
-			Description: "End this unit's actions",
+			Description: "Move across the battlefield",
+		},
+		{
+			ID:          "basic_attack",
+			Name:        "Stab",
+			Kind:        ActionAttack,
+			Range:       1,
+			Power:       0,
+			UsesPerTurn: attackUses,
+			Description: "Basic melee attack",
 		},
 	}
 }
@@ -82,21 +95,36 @@ func defaultSoldierActions(moveRange int, attackUses int) []UnitAction {
 		},
 		{
 			ID:          "basic_attack",
-			Name:        "Attack",
+			Name:        "Rifle",
 			Kind:        ActionAttack,
 			Range:       2,
 			Power:       0,
 			UsesPerTurn: attackUses,
 			Description: "Basic ranged attack",
 		},
+	}
+
+}
+
+func defaultCultistLordActions(moveRange int, attackUses int) []UnitAction {
+	return []UnitAction{
 		{
-			ID:          "wait",
-			Name:        "Wait",
-			Kind:        ActionWait,
-			Range:       0,
+			ID:          "move",
+			Name:        "Move",
+			Kind:        ActionMove,
+			Range:       moveRange,
 			Power:       0,
 			UsesPerTurn: 1,
-			Description: "End this unit's actions",
+			Description: "Move across the battlefield",
+		},
+		{
+			ID:          "basic_attack",
+			Name:        "fire bolt",
+			Kind:        ActionAttack,
+			Range:       3,
+			Power:       0,
+			UsesPerTurn: attackUses,
+			Description: "Ranged fire ball",
 		},
 	}
 

@@ -2,7 +2,10 @@ module github.com/Priske/ProjectS
 
 go 1.25.6
 
-require github.com/hajimehoshi/ebiten/v2 v2.9.8
+require (
+	github.com/hajimehoshi/ebiten/v2 v2.9.8
+	golang.org/x/image v0.31.0
+)
 
 require (
 	github.com/ebitengine/gomobile v0.0.0-20250923094054-ea854a63cce1 // indirect

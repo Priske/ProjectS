@@ -168,6 +168,7 @@ func (ps *PlayScreen) tryAttackWithSelectedAction(g core.Game, action *core.Unit
 	}
 
 	defender.Health -= damage
+	attacker.BattleStats.DamageDealt += damage
 
 	ps.battle.Turn.MarkAttacked(attacker)
 	ps.battle.Turn.MarkNamedActionUsed(attacker, action.ID)
@@ -176,6 +177,7 @@ func (ps *PlayScreen) tryAttackWithSelectedAction(g core.Game, action *core.Unit
 
 	if defender.Health <= 0 {
 		dst.Unit = nil
+		attacker.BattleStats.Kills += 1
 		ps.addBattleLog("Enemy defeated")
 	}
 
