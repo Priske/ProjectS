@@ -29,7 +29,6 @@ func (ps *PlayScreen) enemyUnitsOnBoard(g core.Game) []boardUnitRef {
 
 	return out
 }
-
 func (ps *PlayScreen) enemyTryAttackAdjacent(g core.Game, ex, ey int) bool {
 	board := g.Board()
 	src := board.TilePtr(ex, ey)
@@ -71,15 +70,19 @@ func (ps *PlayScreen) enemyTryAttackAdjacent(g core.Game, ex, ey int) bool {
 	}
 
 	target := bestDst.Unit
-	damage := src.Unit.AttackPower
+	damage := src.Unit.TotalAttackPower()
 
-	target.Health -= damage
+	target.CurrentHealth -= damage
+	if target.CurrentHealth < 0 {
+		target.CurrentHealth = 0
+	}
+
 	target.BattleStats.DamageTaken += damage
 	src.Unit.BattleStats.DamageDealt += damage
 
 	ps.addBattleLog("Enemy attacked " + target.Name)
 
-	if target.Health <= 0 {
+	if target.CurrentHealth <= 0 {
 		src.Unit.BattleStats.Kills++
 		bestDst.Unit = nil
 		ps.addBattleLog(target.Name + " was defeated")
@@ -178,21 +181,17 @@ func attackScore(attacker, target *core.Unit) int {
 		return score
 	}
 
-	// Prefer killing blows
-	if attacker.AttackPower >= target.Health {
+	if attacker.TotalAttackPower() >= target.CurrentHealth {
 		score += 100
 	}
 
-	// Prefer commander / flag
 	if isFlagUnit(target) {
 		score += 1000
 	}
-	/*
-		// Prefer weakened targets
-		score += 20 - target.Health
-	*/
+
 	return score
 }
+
 func moveScore(nx, ny int, target boardUnitRef) int {
 	return -manhattan(nx, ny, target.X, target.Y)
 }
@@ -208,7 +207,7 @@ func (ps *PlayScreen) chooseEnemyTarget(players []boardUnitRef) boardUnitRef {
 			score += 1000
 		}
 
-		score += 20 - p.U.Health
+		score += 20 - p.U.CurrentHealth
 
 		if score > bestScore {
 			bestScore = score
@@ -218,7 +217,6 @@ func (ps *PlayScreen) chooseEnemyTarget(players []boardUnitRef) boardUnitRef {
 
 	return best
 }
-
 func (ps *PlayScreen) runEnemyTurn(g core.Game) {
 	enemies := ps.enemyUnitsOnBoard(g)
 
@@ -276,7 +274,7 @@ func getUsableAttackActions(u *core.Unit) []core.UnitAction {
 		return out
 	}
 
-	for _, a := range u.Actions {
+	for _, a := range u.AllActions() {
 		if a.Kind != core.ActionAttack {
 			continue
 		}
@@ -285,7 +283,6 @@ func getUsableAttackActions(u *core.Unit) []core.UnitAction {
 
 	return out
 }
-
 func (ps *PlayScreen) enemyTryBestAttack(g core.Game, ex, ey int) bool {
 	board := g.Board()
 	src := board.TilePtr(ex, ey)
@@ -335,24 +332,25 @@ func (ps *PlayScreen) enemyTryBestAttack(g core.Game, ex, ey int) bool {
 	}
 
 	target := bestTargetTile.Unit
-	damage := attacker.AttackPower + bestAction.Power
-	if damage < 0 {
-		damage = 0
-	}
+	damage := actionDamage(attacker, bestAction)
 
-	ps.addBattleLog(target.Name + " HP before " + strconv.Itoa(target.Health))
+	ps.addBattleLog(target.Name + " HP before " + strconv.Itoa(target.CurrentHealth))
 	ps.addBattleLog(target.Name + " DT before " + strconv.Itoa(target.BattleStats.DamageTaken))
 
-	target.Health -= damage
+	target.CurrentHealth -= damage
+	if target.CurrentHealth < 0 {
+		target.CurrentHealth = 0
+	}
+
 	target.BattleStats.DamageTaken += damage
 	attacker.BattleStats.DamageDealt += damage
 
-	ps.addBattleLog(target.Name + " HP now " + strconv.Itoa(target.Health))
+	ps.addBattleLog(target.Name + " HP now " + strconv.Itoa(target.CurrentHealth))
 	ps.addBattleLog(target.Name + " DT now " + strconv.Itoa(target.BattleStats.DamageTaken))
 	ps.addBattleLog(attacker.Name + " DD now " + strconv.Itoa(attacker.BattleStats.DamageDealt))
 	ps.addBattleLog(attacker.Name + " used " + bestAction.Name + " on " + target.Name)
 
-	if target.Health <= 0 {
+	if target.CurrentHealth <= 0 {
 		attacker.BattleStats.Kills++
 		bestTargetTile.Unit = nil
 		ps.addBattleLog(target.Name + " was defeated")
@@ -369,25 +367,21 @@ func enemyAttackActionScore(attacker *core.Unit, action *core.UnitAction, target
 		return score
 	}
 
-	damage := attacker.AttackPower + action.Power
-	if damage < 0 {
-		damage = 0
-	}
+	damage := actionDamage(attacker, action)
 
 	if isFlagUnit(target) {
 		score += 1000
 	}
 
-	if damage >= target.Health {
+	if damage >= target.CurrentHealth {
 		score += 500
 	}
 
 	score += damage * 10
-	score += 20 - target.Health
+	score += 20 - target.CurrentHealth
 
 	return score
 }
-
 func (ps *PlayScreen) resetUnitsForTurn(g core.Game, playerID int) {
 	board := g.Board()
 
@@ -399,8 +393,8 @@ func (ps *PlayScreen) resetUnitsForTurn(g core.Game, playerID int) {
 			}
 
 			ps.battle.Turn.Units[u.UnitId] = UnitTurnState{
-				RemainingMoveActions:   u.MoveActionsPerTurn,
-				RemainingAttackActions: u.AttackActionsPerTurn,
+				RemainingMoveActions:   u.TotalMoveActionsPerTurn(),
+				RemainingAttackActions: u.TotalAttackActionsPerTurn(),
 				ActionUses:             map[string]int{},
 			}
 		}

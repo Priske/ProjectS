@@ -75,3 +75,32 @@ func (ps *PlayScreen) tryActionMenuClick(g core.Game, mx, my int) bool {
 	ps.addBattleLog(fmt.Sprintf("Selected action: %s", a.Name))
 	return true
 }
+
+func actionDamage(attacker *core.Unit, action *core.UnitAction) int {
+	if attacker == nil || action == nil {
+		return 0
+	}
+
+	damage := attacker.TotalAttackPower() + action.Power
+	if damage < 0 {
+		damage = 0
+	}
+
+	return damage
+}
+
+func firstAttackAction(u *core.Unit) *core.UnitAction {
+	if u == nil {
+		return nil
+	}
+
+	actions := u.AllActions()
+	for i := range actions {
+		if actions[i].Kind == core.ActionAttack {
+			a := actions[i]
+			return &a
+		}
+	}
+
+	return nil
+}

@@ -49,7 +49,7 @@ func drawUnitInfoCard(dst *ebiten.Image, g core.Game, info HoveredUnitInfo) {
 	}
 
 	ebitenutil.DebugPrintAt(dst, fmt.Sprintf("Type: %v", u.Type), panelX+48, panelY+8)
-	ebitenutil.DebugPrintAt(dst, fmt.Sprintf("HP: %d", u.Health), panelX+48, panelY+24)
+	ebitenutil.DebugPrintAt(dst, fmt.Sprintf("HP: %d/%d", u.CurrentHealth, u.MaxHealth), panelX+48, panelY+24)
 	ebitenutil.DebugPrintAt(dst, fmt.Sprintf("ATK: %d", u.AttackPower), panelX+48, panelY+38)
 	ebitenutil.DebugPrintAt(dst, fmt.Sprintf("XP: %d", u.Experience), panelX+48, panelY+52)
 }

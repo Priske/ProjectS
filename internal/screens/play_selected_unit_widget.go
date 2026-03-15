@@ -38,7 +38,7 @@ func (w *SelectedUnitInfoWidget) Draw(dst *ebiten.Image) {
 
 	ebitenutil.DebugPrintAt(dst, "Selected Unit", w.X+10, w.Y+28)
 	ebitenutil.DebugPrintAt(dst, fmt.Sprintf("Name: %v", u.Name), w.X+10, w.Y+48)
-	ebitenutil.DebugPrintAt(dst, fmt.Sprintf("HP: %d", u.Health), w.X+10, w.Y+64)
+	ebitenutil.DebugPrintAt(dst, fmt.Sprintf("HP: %d/%d", u.CurrentHealth, u.MaxHealth), w.X+10, w.Y+64)
 	ebitenutil.DebugPrintAt(dst, fmt.Sprintf("ATK: %d", u.AttackPower), w.X+10, w.Y+80)
 	ebitenutil.DebugPrintAt(dst, fmt.Sprintf("XP: %d", u.Experience), w.X+10, w.Y+96)
 	ebitenutil.DebugPrintAt(dst, fmt.Sprintf("Pos: %d,%d", w.ps.battle.SelectedX, w.ps.battle.SelectedY), w.X+10, w.Y+112)

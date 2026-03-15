@@ -24,23 +24,15 @@ func (ps *PlayScreen) trySelectUnit(g core.Game, mx, my int) bool {
 	if u.Playerid != 1 {
 		return false
 	}
-	ps.battle.SelectedAction = nil
 
 	ps.battle.Selected = u
 	ps.battle.SelectedX = cx
 	ps.battle.SelectedY = cy
-
-	for i := range u.Actions {
-		if u.Actions[i].Kind == core.ActionAttack {
-			ps.battle.SelectedAction = &u.Actions[i]
-			break
-		}
-	}
+	ps.battle.SelectedAction = firstAttackAction(u)
 
 	ps.addBattleLog(fmt.Sprintf("Selected %v (%d,%d)", u.Type, cx, cy))
 	return true
 }
-
 func (ps *PlayScreen) tryMoveUnit(g core.Game, u *core.Unit, fromX, fromY, toX, toY int) bool {
 	if u == nil {
 		ps.addBattleLog("Move blocked: no unit")
@@ -67,7 +59,7 @@ func (ps *PlayScreen) tryMoveUnit(g core.Game, u *core.Unit, fromX, fromY, toX, 
 		ps.addBattleLog("Move blocked: same tile")
 		return false
 	}
-	if dist > u.MoveRange {
+	if dist > u.TotalMoveRange() {
 		ps.addBattleLog("Move blocked: out of range")
 		return false
 	}
@@ -110,7 +102,6 @@ func (ps *PlayScreen) tryMoveUnit(g core.Game, u *core.Unit, fromX, fromY, toX, 
 	ps.addBattleLog(fmt.Sprintf("Unit moved to (%d,%d)", toX, toY))
 	return true
 }
-
 func (ps *PlayScreen) tryAttackWithSelectedAction(g core.Game, action *core.UnitAction, targetX, targetY int) bool {
 	if ps.battle.Selected == nil || action == nil {
 		return false
@@ -162,22 +153,24 @@ func (ps *PlayScreen) tryAttackWithSelectedAction(g core.Game, action *core.Unit
 		return false
 	}
 
-	damage := action.Power
-	if damage == 0 {
-		damage = attacker.AttackPower
+	damage := actionDamage(attacker, action)
+
+	defender.CurrentHealth -= damage
+	if defender.CurrentHealth < 0 {
+		defender.CurrentHealth = 0
 	}
 
-	defender.Health -= damage
+	defender.BattleStats.DamageTaken += damage
 	attacker.BattleStats.DamageDealt += damage
 
 	ps.battle.Turn.MarkAttacked(attacker)
 	ps.battle.Turn.MarkNamedActionUsed(attacker, action.ID)
 
-	ps.addBattleLog(fmt.Sprintf("%s used %s", attacker.Type, action.Name))
+	ps.addBattleLog(fmt.Sprintf("%s used %s on %s", attacker.Name, action.Name, defender.Name))
 
-	if defender.Health <= 0 {
+	if defender.CurrentHealth <= 0 {
 		dst.Unit = nil
-		attacker.BattleStats.Kills += 1
+		attacker.BattleStats.Kills++
 		ps.addBattleLog("Enemy defeated")
 	}
 

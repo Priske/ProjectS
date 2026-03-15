@@ -124,7 +124,7 @@ func defaultCultistLordActions(moveRange int, attackUses int) []UnitAction {
 			Range:       3,
 			Power:       0,
 			UsesPerTurn: attackUses,
-			Description: "Ranged fire ball",
+			Description: "Ranged fire bolt",
 		},
 	}
 
