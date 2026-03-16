@@ -16,7 +16,7 @@ type DragState struct {
 	MX, MY int
 }
 
-func (d *DragState) Begin(fromX, fromY int, payload any, mx, my, grabOffX, grabOffY int) {
+func (d *DragState) Begin(source DragSource, fromX, fromY int, payload any, mx, my, grabOffX, grabOffY int) {
 	d.Active = true
 	d.FromX, d.FromY = fromX, fromY
 	d.Payload = payload
@@ -39,4 +39,6 @@ const (
 	DragFromGrid
 	DragFromFormationPalette
 	DragFromFormation
+	DragFromInventory
+	DragFromChest
 )

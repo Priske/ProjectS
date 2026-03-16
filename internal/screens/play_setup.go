@@ -6,19 +6,16 @@ import (
 )
 
 func (ps *PlayScreen) updateSetupWidgets(g core.Game) {
-
-	if len(ps.setup.unPlacedUnits) == 0 && !ps.setup.readyAdded {
-		ps.setup.readyWidget = ps.makeReadyButton(g)
-		ps.ui.widgets = append(ps.ui.widgets, ps.setup.readyWidget)
-		ps.setup.readyAdded = true
+	readyNow := len(ps.setup.unPlacedUnits) == 0
+	if readyNow == ps.setup.readyAdded {
+		return
 	}
 
-	if len(ps.setup.unPlacedUnits) != 0 && ps.setup.readyAdded {
-		ps.ui.widgets = removeWidget(ps.ui.widgets, ps.setup.readyWidget)
-		ps.setup.readyWidget = nil
-		ps.setup.readyAdded = false
-	}
+	ps.setup.readyAdded = readyNow
 
+	if len(ps.ui.widgets) >= 2 {
+		ps.ui.widgets[1] = ps.makeSetupRightSidebar(g)
+	}
 }
 func (ps *PlayScreen) resetSetupState(g core.Game) {
 	board := g.Board()

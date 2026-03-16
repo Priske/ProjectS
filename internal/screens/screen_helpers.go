@@ -1,6 +1,8 @@
 package screens
 
 import (
+	"strconv"
+
 	"github.com/Priske/ProjectS/internal/core"
 )
 
@@ -153,4 +155,27 @@ func normalizeFormationWants(wants map[core.Pos]core.UnitType) map[core.Pos]core
 	}
 
 	return out
+}
+func countPlacedPlayerUnits(g core.Game) int {
+	board := g.Board()
+	count := 0
+
+	for y := range board.Location {
+		for x := range board.Location[y] {
+			u := board.Location[y][x].Unit
+			if u == nil {
+				continue
+			}
+			if u.Playerid != 1 {
+				continue
+			}
+			count++
+		}
+	}
+
+	return count
+}
+
+func itoa(v int) string {
+	return strconv.Itoa(v)
 }

@@ -5,24 +5,15 @@ import (
 	GUI "github.com/Priske/ProjectS/internal/guiAssets"
 )
 
-func (ps *PlayScreen) makeRightSidebarSetup(g core.Game) core.Widget {
-
-	x := 999
-	y := 40
-	reset := GUI.MakeButton(x, y, 240, 50, "reset", func() {
+func (ps *PlayScreen) makeRightSidebarSetup(g core.Game, width int) core.Widget {
+	return GUI.MakeButton(0, 0, width, 50, "reset", func() {
 		ps.resetSetupState(g)
 	})
-	return reset
-
 }
-
-func (ps *PlayScreen) makeReadyButton(g core.Game) core.Widget {
-	x := 999
-	y := 400
-	ready := GUI.MakeButton(x, y, 240, 50, "Ready", func() {
+func (ps *PlayScreen) makeReadyButton(g core.Game, width int) core.Widget {
+	return GUI.MakeButton(0, 0, width, 50, "Ready", func() {
 		ps.confirmSetup(g)
 	})
-	return ready
 }
 func (ps *PlayScreen) makeBattleRightSidebar(g core.Game) core.Widget {
 	offX, offY, boardW, boardH, _ := boardGeom(g)
@@ -72,4 +63,116 @@ func (ps *PlayScreen) makeBattleRightSidebar(g core.Game) core.Widget {
 	endTurnButton.(core.Positionable).SetPos(buttonX, buttonY)
 
 	return sidebar
+}
+
+func (ps *PlayScreen) makeSetupRightSidebar(g core.Game) core.Widget {
+	offX, _, boardW, _, _ := boardGeom(g)
+
+	sidebarGap := 20
+	sidebarX := offX + boardW + sidebarGap
+	sidebarY := 40
+	sidebarW := 260
+	sidebarH := 640
+
+	padding := 10
+	gap := 10
+
+	innerW := sidebarW - padding*2
+	if innerW < 0 {
+		innerW = 0
+	}
+
+	actionsH := 180
+	inventoryH := sidebarH - padding*2 - gap - actionsH
+	if inventoryH < 0 {
+		inventoryH = 0
+	}
+
+	actionsPanel := GUI.MakePanel(0, 0, innerW, actionsH, "Actions", []core.Widget{
+		ps.makeRightSidebarSetup(g, innerW-20),
+	})
+	actionsPanel.AutoLayout = true
+
+	if len(ps.setup.unPlacedUnits) == 0 {
+		actionsPanel.Children = append(actionsPanel.Children, ps.makeReadyButton(g, innerW-20))
+	}
+
+	inventoryPanel := GUI.MakePanel(0, 0, innerW, inventoryH, "Inventory", []core.Widget{})
+	inventoryPanel.AutoLayout = true
+
+	// IMPORTANT: absolute screen coordinates, not local coordinates
+	actionsPanel.SetPos(sidebarX+padding, sidebarY+padding)
+	inventoryPanel.SetPos(sidebarX+padding, sidebarY+padding+actionsH+gap)
+
+	sidebar := GUI.MakePanel(sidebarX, sidebarY, sidebarW, sidebarH, "", []core.Widget{
+		actionsPanel,
+		inventoryPanel,
+	})
+	sidebar.AutoLayout = false
+
+	return sidebar
+}
+func (ps *PlayScreen) makeSetupInventoryPanel(g core.Game) core.Widget {
+	x := 999
+	y := 230
+	w := 240
+	h := 480
+
+	children := []core.Widget{
+		GUI.MakeLabel(0, 0, "Placed units: "+itoa(countPlacedPlayerUnits(g))),
+		GUI.MakeLabel(0, 0, "Unplaced units: "+itoa(len(ps.setup.unPlacedUnits))),
+	}
+
+	return GUI.MakePanel(x, y, w, h, "Inventory", children)
+}
+func (ps *PlayScreen) makeSetupActionsPanel(g core.Game) core.Widget {
+	x := 999
+	y := 40
+	w := 240
+	h := 180
+
+	padding := 10
+	contentW := w - padding*2
+	if contentW < 0 {
+		contentW = 0
+	}
+
+	children := []core.Widget{
+		ps.makeRightSidebarSetup(g, contentW),
+	}
+
+	if len(ps.setup.unPlacedUnits) == 0 {
+		children = append(children, ps.makeReadyButton(g, contentW))
+	}
+
+	return GUI.MakePanel(x, y, w, h, "Actions", children)
+}
+
+func (ps *PlayScreen) makeSetupRightPanel(g core.Game) core.Widget {
+	x := 999
+	y := 40
+	w := 240
+	h := 410
+
+	padding := 10
+	contentW := w - padding*2
+	if contentW < 0 {
+		contentW = 0
+	}
+
+	children := []core.Widget{
+		ps.makeRightSidebarSetup(g, contentW),
+	}
+
+	if len(ps.setup.unPlacedUnits) == 0 {
+		ready := ps.makeReadyButton(g, contentW)
+		ps.setup.readyWidget = ready
+		ps.setup.readyAdded = true
+		children = append(children, ready)
+	} else {
+		ps.setup.readyWidget = nil
+		ps.setup.readyAdded = false
+	}
+
+	return GUI.MakePanel(x, y, w, h, "Actions", children)
 }

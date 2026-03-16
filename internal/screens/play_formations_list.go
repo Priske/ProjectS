@@ -48,14 +48,15 @@ func (s *DynamicFormationSection) refreshChildrenIfNeeded() {
 	}
 
 	widgets := []core.Widget{}
+	contentW := s.contentWidth()
 
-	createFormationBtn := GUI.MakeButton(0, 0, 240, 50, "Create formation", func() {
+	createFormationBtn := GUI.MakeButton(0, 0, contentW, 50, "Create formation", func() {
 		s.ps.resetFormationDraft()
 		s.ps.openFormationEditorModal(s.g)
 	})
 	widgets = append(widgets, createFormationBtn)
 
-	widgets = append(widgets, s.ps.makeFormationListWidget(s.g)...)
+	widgets = append(widgets, s.ps.makeFormationListWidget(s.g, contentW)...)
 
 	s.cachedChildren = widgets
 	s.lastCount = count
@@ -129,11 +130,12 @@ func (s *DynamicFormationSection) TotalHeight() int {
 	}
 	return total
 }
-func (ps *PlayScreen) makeFormationSection(g core.Game) core.Widget {
+
+func (ps *PlayScreen) makeFormationSection(g core.Game, width int) core.Widget {
 	return &DynamicFormationSection{
 		X:       0,
 		Y:       0,
-		W:       240,
+		W:       width,
 		H:       50,
 		Title:   "Formations",
 		Padding: 10,
@@ -143,7 +145,7 @@ func (ps *PlayScreen) makeFormationSection(g core.Game) core.Widget {
 	}
 }
 
-func (ps *PlayScreen) makeFormationListWidget(g core.Game) []core.Widget {
+func (ps *PlayScreen) makeFormationListWidget(g core.Game, width int) []core.Widget {
 	widgets := []core.Widget{}
 
 	for i := range g.LocalPlayer().Formations {
@@ -155,7 +157,7 @@ func (ps *PlayScreen) makeFormationListWidget(g core.Game) []core.Widget {
 			name = "Unnamed"
 		}
 
-		btn := GUI.MakeButton(0, 0, 240, 44, name, func() {
+		btn := GUI.MakeButton(0, 0, width, 44, name, func() {
 			ps.drag.Active = true
 			ps.drag.Source = interaction.DragFromFormation
 			ps.drag.Payload = &g.LocalPlayer().Formations[index]
@@ -179,4 +181,12 @@ func (ps *PlayScreen) makeFormationListWidget(g core.Game) []core.Widget {
 	}
 
 	return widgets
+}
+
+func (s *DynamicFormationSection) contentWidth() int {
+	w := s.W - s.Padding*2
+	if w < 0 {
+		return 0
+	}
+	return w
 }

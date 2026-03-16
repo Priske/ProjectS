@@ -14,6 +14,7 @@ func (ps *PlayScreen) tryStartBoardDrag(g core.Game, input core.Input) {
 				px, py := cellTopLeft(g, cx, cy)
 
 				ps.drag = interaction.DragState{
+					Source:   interaction.DragFromBoard,
 					Active:   true,
 					FromX:    cx,
 					FromY:    cy,

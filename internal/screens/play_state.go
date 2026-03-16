@@ -17,12 +17,10 @@ type PlayScreen struct {
 }
 
 func (ps *PlayScreen) buildSetupUI(g core.Game) {
-
 	ps.ui.widgets = []core.Widget{
-		ps.makeOptionsSidebar(g),
-		ps.makeRightSidebarSetup(g),
+		ps.makeSetupLeftPanel(g),
+		ps.makeSetupRightSidebar(g),
 	}
-
 }
 func (ps *PlayScreen) buildBattleUI(g core.Game) {
 	right := ps.makeBattleRightSidebar(g)

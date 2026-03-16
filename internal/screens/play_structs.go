@@ -6,9 +6,14 @@ import (
 )
 
 type PlayUI struct {
-	widgets  []core.Widget
-	modal    *GUI.Modal
-	overlay  core.Widget // generic popup/tooltip/etc
+	widgets []core.Widget
+	modal   *GUI.Modal
+	overlay core.Widget // generic popup/tooltip/etc
+
+	setupLeftPanel      core.Widget
+	setupActionsPanel   core.Widget
+	setupInventoryPanel core.Widget
+
 	lastDrop string
 }
 
@@ -17,6 +22,8 @@ type SetupState struct {
 	unPlacedUnits []*core.Unit
 	readyAdded    bool
 	readyWidget   core.Widget
+
+	Selected *core.Unit
 }
 
 type FormationEditorState struct {
