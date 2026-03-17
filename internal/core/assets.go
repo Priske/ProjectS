@@ -5,9 +5,14 @@ import (
 )
 
 type Assets struct {
-	UnitImages     map[UnitType]*ebiten.Image
-	CategoryImages map[UnitCategory]*ebiten.Image
-	LocationImages map[LocationType]*ebiten.Image
+	UnitImages      map[UnitType]*ebiten.Image
+	CategoryImages  map[UnitCategory]*ebiten.Image
+	LocationImages  map[LocationType]*ebiten.Image
+	ShopImages      map[ItemCategory]*ebiten.Image
+	SlotIcons       map[ItemCategory]*ebiten.Image
+	FrameTemplate   *ebiten.Image
+	ChestButtonIcon *ebiten.Image
+	ShopButtonIcon  *ebiten.Image
 }
 
 func (a *Assets) UnitImage(t UnitType) *ebiten.Image {

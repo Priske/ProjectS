@@ -7,6 +7,8 @@ import (
 	"github.com/Priske/ProjectS/internal/core"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
+	"github.com/hajimehoshi/ebiten/v2/text"
+	"golang.org/x/image/font/basicfont"
 )
 
 func drawGrid(screen *ebiten.Image, offX, offY, boardW, boardH, cellSize int) {
@@ -498,4 +500,157 @@ func (ps *PlayScreen) drawAttackTargetLine(g core.Game, screen *ebiten.Image) {
 	y2 := ty + size/2
 
 	ebitenutil.DrawLine(screen, float64(x1), float64(y1), float64(x2), float64(y2), color.RGBA{255, 60, 60, 180})
+}
+
+func drawImageCentered(dst *ebiten.Image, img *ebiten.Image, px, py, w, h int) {
+	if img == nil {
+		return
+	}
+
+	sw, sh := img.Bounds().Dx(), img.Bounds().Dy()
+	if sw == 0 || sh == 0 {
+		return
+	}
+
+	scaleX := float64(w) / float64(sw)
+	scaleY := float64(h) / float64(sh)
+	scale := scaleX
+	if scaleY < scale {
+		scale = scaleY
+	}
+
+	drawW := float64(sw) * scale
+	drawH := float64(sh) * scale
+
+	op := &ebiten.DrawImageOptions{}
+	op.GeoM.Scale(scale, scale)
+	op.GeoM.Translate(
+		float64(px)+(float64(w)-drawW)/2,
+		float64(py)+(float64(h)-drawH)/2,
+	)
+	dst.DrawImage(img, op)
+}
+func drawSlotFrame(screen *ebiten.Image, assets core.Assets, px, py, size int) {
+	img := assets.FrameTemplate
+	if img == nil {
+		return
+	}
+
+	sw, sh := img.Bounds().Dx(), img.Bounds().Dy()
+	if sw == 0 || sh == 0 {
+		return
+	}
+
+	op := &ebiten.DrawImageOptions{}
+	op.GeoM.Scale(float64(size)/float64(sw), float64(size)/float64(sh))
+	op.GeoM.Translate(float64(px), float64(py))
+	screen.DrawImage(img, op)
+}
+
+func drawEquipmentSlot(screen *ebiten.Image, assets core.Assets, cat core.ItemCategory, px, py, size int) {
+	drawSlotFrame(screen, assets, px, py, size)
+
+	icon := assets.SlotIcons[cat]
+	if icon == nil {
+		return
+	}
+
+	padding := size / 7 // ← smaller padding = bigger icon
+
+	drawImageCenteredTinted(
+		screen,
+		icon,
+		px+padding,
+		py+padding,
+		size-(padding*2),
+		size-(padding*2),
+		1.8, // ← brighten
+	)
+}
+
+func drawInventoryActionButton(screen *ebiten.Image, icon *ebiten.Image, px, py, size int) {
+	if icon == nil {
+		return
+	}
+
+	padding := size / 18
+
+	drawImageCentered(
+		screen,
+		icon,
+		px+padding,
+		py+padding,
+		size-(padding*2),
+		size-(padding*2),
+	)
+}
+
+func drawInventoryPanelLayout(screen *ebiten.Image, assets core.Assets, px, py, w, h int) {
+	text.Draw(screen, "Inventory", basicfont.Face7x13, px+12, py+18, color.White)
+	text.Draw(screen, "Selected: None", basicfont.Face7x13, px+12, py+38, color.White)
+
+	slotSize := 52
+	gap := 10
+
+	startX := px + 16
+	startY := py + 56
+
+	// Row 1: weapon, weapon
+	drawEquipmentSlot(screen, assets, core.CategoryWeapon, startX, startY, slotSize)
+	drawEquipmentSlot(screen, assets, core.CategoryWeapon, startX+slotSize+gap, startY, slotSize)
+
+	// Row 2: armor, carry (temporary stand-in still needed if no carry icon exists yet)
+	row2Y := startY + slotSize + gap
+	drawEquipmentSlot(screen, assets, core.CategoryArmor, startX, row2Y, slotSize)
+	drawEquipmentSlot(screen, assets, core.CategoryChest, startX+slotSize+gap, row2Y, slotSize)
+
+	// Row 3: accessories
+	row3Y := row2Y + slotSize + gap + 8
+	drawEquipmentSlot(screen, assets, core.CategoryCharm, startX, row3Y, slotSize)
+	drawEquipmentSlot(screen, assets, core.CategoryCharm, startX+slotSize+gap, row3Y, slotSize)
+	drawEquipmentSlot(screen, assets, core.CategoryCharm, startX+2*(slotSize+gap), row3Y, slotSize)
+
+	// Row 4: ammo
+
+	row4Y := row3Y + slotSize + gap
+	drawEquipmentSlot(screen, assets, core.CategoryAmmo, startX, row4Y, slotSize)
+	drawEquipmentSlot(screen, assets, core.CategoryAmmo, startX+slotSize+gap, row4Y, slotSize)
+	drawEquipmentSlot(screen, assets, core.CategoryAmmo, startX+2*(slotSize+gap), row4Y, slotSize)
+
+	// Bottom action row
+	buttonSize := 56
+	buttonGap := 16
+	buttonY := py + h - buttonSize - 16
+
+	drawInventoryActionButton(screen, assets.ChestButtonIcon, startX, buttonY, buttonSize)
+	drawInventoryActionButton(screen, assets.ShopButtonIcon, startX+buttonSize+buttonGap, buttonY, buttonSize)
+}
+
+func (ps *PlayScreen) drawInventorySlot(dst *ebiten.Image, g core.Game, cat core.ItemCategory, px, py, size int) {
+	assets := g.Assets()
+
+	if assets.FrameTemplate != nil {
+		sw, sh := assets.FrameTemplate.Bounds().Dx(), assets.FrameTemplate.Bounds().Dy()
+		if sw > 0 && sh > 0 {
+			op := &ebiten.DrawImageOptions{}
+			op.GeoM.Scale(float64(size)/float64(sw), float64(size)/float64(sh))
+			op.GeoM.Translate(float64(px), float64(py))
+			dst.DrawImage(assets.FrameTemplate, op)
+		}
+	}
+
+	icon := assets.SlotIcons[cat]
+	if icon == nil {
+		return
+	}
+
+	padding := size / 12
+	drawImageCentered(
+		dst,
+		icon,
+		px+padding,
+		py+padding,
+		size-(padding*2),
+		size-(padding*2),
+	)
 }

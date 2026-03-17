@@ -23,12 +23,11 @@ func (ps *PlayScreen) resetSetupState(g core.Game) {
 
 	ps.setup.unPlacedUnits = append([]*core.Unit(nil), g.LocalPlayer().Units...)
 	ps.setup.setupMode = true
+	ps.setup.readyAdded = false
+	ps.setup.readyWidget = nil
 
-	if ps.setup.readyAdded {
-		ps.ui.widgets = removeWidget(ps.ui.widgets, ps.setup.readyWidget)
-		ps.setup.readyWidget = nil
-		ps.setup.readyAdded = false
-	}
+	ps.ui.widgets[1] = ps.makeSetupRightSidebar(g)
+
 }
 
 func (ps *PlayScreen) confirmSetup(g core.Game) {

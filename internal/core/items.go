@@ -11,12 +11,16 @@ const (
 )
 const (
 	CategoryAmmo ItemCategory = iota
-	CategoryMinor
+	CategoryTile
+	CategoryPotion
 	CategoryWeapon
 	CategoryArmor
 	CategoryAccessory
 	CategoryGrenade
 	CategoryTool
+	CategoryChest
+	CategoryCharm
+	CategoryBag
 )
 
 type ItemBase struct {

@@ -3,6 +3,7 @@ package screens
 import (
 	"github.com/Priske/ProjectS/internal/core"
 	GUI "github.com/Priske/ProjectS/internal/guiAssets"
+	"github.com/hajimehoshi/ebiten/v2"
 )
 
 func (ps *PlayScreen) makeRightSidebarSetup(g core.Game, width int) core.Widget {
@@ -98,11 +99,48 @@ func (ps *PlayScreen) makeSetupRightSidebar(g core.Game) core.Widget {
 	}
 
 	inventoryPanel := GUI.MakePanel(0, 0, innerW, inventoryH, "Inventory", []core.Widget{})
-	inventoryPanel.AutoLayout = true
+	inventoryPanel.AutoLayout = false
 
-	// IMPORTANT: absolute screen coordinates, not local coordinates
 	actionsPanel.SetPos(sidebarX+padding, sidebarY+padding)
 	inventoryPanel.SetPos(sidebarX+padding, sidebarY+padding+actionsH+gap)
+
+	contentX := inventoryPanel.X + 14
+	contentY := inventoryPanel.Y + 40
+	contentW := inventoryPanel.W - 28
+	if contentW < 0 {
+		contentW = 0
+	}
+
+	selectedLabel := GUI.MakeLabel(contentX, contentY, "Selected: None")
+
+	slotGrid := ps.makeSetupInventoryGrid(g, 0, 0)
+	actionGrid := ps.makeSetupInventoryActionGrid(g, 0, 0)
+
+	slotCell := 56
+	slotGridW := 3 * slotCell
+	slotGridH := 3 * slotCell
+
+	actionCell := 112
+	actionGridW := 2 * actionCell
+
+	slotGridX := contentX + (contentW-slotGridW)/2
+	slotGridY := contentY + 26
+
+	actionGridX := contentX + (contentW-actionGridW)/2
+	actionGridY := slotGridY + slotGridH + 14
+
+	if p, ok := slotGrid.(core.Positionable); ok {
+		p.SetPos(slotGridX, slotGridY)
+	}
+	if p, ok := actionGrid.(core.Positionable); ok {
+		p.SetPos(actionGridX, actionGridY)
+	}
+
+	inventoryPanel.Children = []core.Widget{
+		selectedLabel,
+		slotGrid,
+		actionGrid,
+	}
 
 	sidebar := GUI.MakePanel(sidebarX, sidebarY, sidebarW, sidebarH, "", []core.Widget{
 		actionsPanel,
@@ -112,6 +150,103 @@ func (ps *PlayScreen) makeSetupRightSidebar(g core.Game) core.Widget {
 
 	return sidebar
 }
+func (ps *PlayScreen) makeSetupInventoryActionGrid(g core.Game, x, y int) core.Widget {
+	grid := GUI.MakeGridField(x, y, 2, 1, 112)
+	actions := []string{"chest", "shop"}
+
+	grid.ShowGrid = false
+
+	grid.Get = func(cx, cy int) any {
+		i := cy*2 + cx
+		if i < 0 || i >= len(actions) {
+			return nil
+		}
+		return actions[i]
+	}
+
+	grid.DrawCell = func(dst *ebiten.Image, cx, cy int, px, py, size int, payload any) {
+		action, ok := payload.(string)
+		if !ok {
+			return
+		}
+
+		switch action {
+		case "chest":
+			drawInventoryActionButton(dst, g.Assets().ChestButtonIcon, px, py, size)
+		case "shop":
+			drawInventoryActionButton(dst, g.Assets().ShopButtonIcon, px, py, size)
+		}
+	}
+
+	grid.OnCellClick = func(cx, cy int) {
+		switch cy*2 + cx {
+		case 0:
+			// chest later
+		case 1:
+			// shop later
+		}
+	}
+
+	return grid
+}
+
+type invSlot struct {
+	Category core.ItemCategory
+}
+
+func (ps *PlayScreen) makeSetupInventoryGrid(g core.Game, x, y int) core.Widget {
+	cell := 56
+	cols := 3
+	rows := 3
+
+	slots := []any{
+		// Row 1
+		invSlot{Category: core.CategoryWeapon},
+		invSlot{Category: core.CategoryArmor},
+		invSlot{Category: core.CategoryWeapon},
+
+		// Row 2
+		invSlot{Category: core.CategoryCharm}, // temp generic slot
+		invSlot{Category: core.CategoryCharm}, // temp generic slot
+		invSlot{Category: core.CategoryCharm}, // temp generic slot
+
+		// Row 3
+		invSlot{Category: core.CategoryAmmo},
+		invSlot{Category: core.CategoryAmmo},
+		invSlot{Category: core.CategoryAmmo},
+	}
+
+	grid := GUI.MakeGridField(x, y, cols, rows, cell)
+	grid.ShowGrid = false
+
+	grid.Get = func(cx, cy int) any {
+		i := cy*cols + cx
+		if i < 0 || i >= len(slots) {
+			return nil
+		}
+		return slots[i]
+	}
+
+	grid.DrawCell = func(dst *ebiten.Image, cx, cy int, px, py, size int, payload any) {
+		slot, ok := payload.(invSlot)
+		if !ok {
+			return
+		}
+		ps.drawInventorySlot(dst, g, slot.Category, px, py, size)
+	}
+
+	return grid
+}
+
+func (ps *PlayScreen) makeSlot(cat core.ItemCategory) core.Widget {
+	return GUI.MakeButton(0, 0, 48, 48, "", nil) // temp
+
+	// later:
+	// custom widget that draws:
+	// - frame_template
+	// - icon
+}
+
 func (ps *PlayScreen) makeSetupInventoryPanel(g core.Game) core.Widget {
 	x := 999
 	y := 230
@@ -119,8 +254,7 @@ func (ps *PlayScreen) makeSetupInventoryPanel(g core.Game) core.Widget {
 	h := 480
 
 	children := []core.Widget{
-		GUI.MakeLabel(0, 0, "Placed units: "+itoa(countPlacedPlayerUnits(g))),
-		GUI.MakeLabel(0, 0, "Unplaced units: "+itoa(len(ps.setup.unPlacedUnits))),
+		GUI.MakeLabel(x+12, y+24, "Selected: None"),
 	}
 
 	return GUI.MakePanel(x, y, w, h, "Inventory", children)
