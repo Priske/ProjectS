@@ -111,23 +111,27 @@ func (ps *PlayScreen) makeSetupRightSidebar(g core.Game) core.Widget {
 		contentW = 0
 	}
 
-	selectedLabel := GUI.MakeLabel(contentX, contentY, "Selected: None")
+	selectedLabel := &SetupSelectedLabelWidget{
+		ps: ps,
+		X:  contentX,
+		Y:  contentY,
+	}
 
 	slotGrid := ps.makeSetupInventoryGrid(g, 0, 0)
 	actionGrid := ps.makeSetupInventoryActionGrid(g, 0, 0)
 
-	slotCell := 56
+	slotCell := 64
 	slotGridW := 3 * slotCell
-	slotGridH := 3 * slotCell
 
 	actionCell := 112
 	actionGridW := 2 * actionCell
+	actionGridH := actionCell
 
 	slotGridX := contentX + (contentW-slotGridW)/2
 	slotGridY := contentY + 26
 
 	actionGridX := contentX + (contentW-actionGridW)/2
-	actionGridY := slotGridY + slotGridH + 14
+	actionGridY := inventoryPanel.Y + inventoryPanel.H - actionGridH - 28
 
 	if p, ok := slotGrid.(core.Positionable); ok {
 		p.SetPos(slotGridX, slotGridY)
@@ -195,47 +199,184 @@ type invSlot struct {
 }
 
 func (ps *PlayScreen) makeSetupInventoryGrid(g core.Game, x, y int) core.Widget {
-	cell := 56
-	cols := 3
-	rows := 3
+	cell := 68
 
-	slots := []any{
-		// Row 1
-		invSlot{Category: core.CategoryWeapon},
-		invSlot{Category: core.CategoryArmor},
-		invSlot{Category: core.CategoryWeapon},
-
-		// Row 2
-		invSlot{Category: core.CategoryCharm}, // temp generic slot
-		invSlot{Category: core.CategoryCharm}, // temp generic slot
-		invSlot{Category: core.CategoryCharm}, // temp generic slot
-
-		// Row 3
-		invSlot{Category: core.CategoryAmmo},
-		invSlot{Category: core.CategoryAmmo},
-		invSlot{Category: core.CategoryAmmo},
+	equipmentLayout := [][]core.EquipmentSlot{
+		{core.SlotCharm, core.SlotHead, core.SlotBag},
+		{core.SlotWeapon1, core.SlotArmor, core.SlotWeapon2},
+		{core.SlotAmmo1, core.SlotLegs, core.SlotAmmo2},
 	}
+
+	cols := 3
+	rows := len(equipmentLayout)
 
 	grid := GUI.MakeGridField(x, y, cols, rows, cell)
 	grid.ShowGrid = false
 
 	grid.Get = func(cx, cy int) any {
-		i := cy*cols + cx
-		if i < 0 || i >= len(slots) {
+		if cy < 0 || cy >= len(equipmentLayout) {
 			return nil
 		}
-		return slots[i]
+
+		slot := equipmentLayout[cy][cx]
+
+		u := ps.setup.Selected
+		if u == nil {
+			return slot
+		}
+
+		if slot == core.SlotWeapon1 || slot == core.SlotWeapon2 {
+			item1 := u.Equipped[core.SlotWeapon1]
+			item2 := u.Equipped[core.SlotWeapon2]
+
+			if item1 != nil && item1 == item2 {
+				return item1
+			}
+
+			if item, ok := u.Equipped[slot]; ok {
+				return item
+			}
+
+			return slot
+		}
+
+		if item, ok := u.Equipped[slot]; ok {
+			return item
+		}
+
+		return slot
 	}
 
 	grid.DrawCell = func(dst *ebiten.Image, cx, cy int, px, py, size int, payload any) {
-		slot, ok := payload.(invSlot)
-		if !ok {
-			return
+		assets := g.Assets()
+
+		if assets.FrameTemplate != nil {
+			sw, sh := assets.FrameTemplate.Bounds().Dx(), assets.FrameTemplate.Bounds().Dy()
+			if sw > 0 && sh > 0 {
+				op := &ebiten.DrawImageOptions{}
+				op.GeoM.Scale(float64(size)/float64(sw), float64(size)/float64(sh))
+				op.GeoM.Translate(float64(px), float64(py))
+				dst.DrawImage(assets.FrameTemplate, op)
+			}
 		}
-		ps.drawInventorySlot(dst, g, slot.Category, px, py, size)
+
+		if item, ok := payload.(core.Item); ok && item != nil {
+			if icon := assets.ItemIcons[item.Base().ID]; icon != nil {
+				padding := size / 10
+				drawImageCentered(
+					dst,
+					icon,
+					px+padding,
+					py+padding,
+					size-(padding*2),
+					size-(padding*2),
+				)
+				return
+			}
+		}
+
+		if slot, ok := payload.(core.EquipmentSlot); ok {
+			cat := slotToCategory(slot)
+
+			icon := assets.SlotIcons[cat]
+			if icon == nil {
+				return
+			}
+
+			padding := size / 12
+			drawImageCentered(
+				dst,
+				icon,
+				px+padding,
+				py+padding,
+				size-(padding*2),
+				size-(padding*2),
+			)
+		}
 	}
 
 	return grid
+}
+func slotToCategory(slot core.EquipmentSlot) core.ItemCategory {
+	switch slot {
+	case core.SlotWeapon1, core.SlotWeapon2:
+		return core.CategoryWeapon
+	case core.SlotArmor:
+		return core.CategoryArmor
+	case core.SlotHead:
+		return core.CategoryHead
+	case core.SlotLegs:
+		return core.CategoryLegs
+	case core.SlotCharm:
+		return core.CategoryCharm
+	case core.SlotBag:
+		return core.CategoryBag
+	case core.SlotAmmo1, core.SlotAmmo2, core.SlotAmmo3:
+		return core.CategoryAmmo
+	}
+	return core.CategoryWeapon
+}
+func (ps *PlayScreen) drawInventoryCell(dst *ebiten.Image, g core.Game, cx, cy int, px, py, size int, payload any) {
+	assets := g.Assets()
+
+	if assets.FrameTemplate != nil {
+		sw, sh := assets.FrameTemplate.Bounds().Dx(), assets.FrameTemplate.Bounds().Dy()
+		if sw > 0 && sh > 0 {
+			op := &ebiten.DrawImageOptions{}
+			op.GeoM.Scale(float64(size)/float64(sw), float64(size)/float64(sh))
+			op.GeoM.Translate(float64(px), float64(py))
+			dst.DrawImage(assets.FrameTemplate, op)
+		}
+	}
+
+	// Real item icon
+	if item, ok := payload.(core.Item); ok && item != nil {
+		if icon := assets.ItemIcons[item.Base().ID]; icon != nil {
+			padding := size / 10
+			drawImageCentered(
+				dst,
+				icon,
+				px+padding,
+				py+padding,
+				size-(padding*2),
+				size-(padding*2),
+			)
+			return
+		}
+	}
+
+	// Empty-slot placeholder by layout position
+	var cat core.ItemCategory
+
+	if cy == 0 {
+		switch cx {
+		case 0:
+			cat = core.CategoryWeapon
+		case 1:
+			cat = core.CategoryArmor
+		case 2:
+			cat = core.CategoryWeapon // change later if you add a true 2nd weapon / carry / accessory slot
+		}
+	} else if cy == 1 {
+		cat = core.CategoryAccessory
+	} else {
+		cat = core.CategoryAmmo
+	}
+
+	icon := assets.SlotIcons[cat]
+	if icon == nil {
+		return
+	}
+
+	padding := size / 12
+	drawImageCentered(
+		dst,
+		icon,
+		px+padding,
+		py+padding,
+		size-(padding*2),
+		size-(padding*2),
+	)
 }
 
 func (ps *PlayScreen) makeSlot(cat core.ItemCategory) core.Widget {

@@ -5,26 +5,36 @@ type ItemCategory int
 type EquipmentSlot int
 
 const (
-	SlotWeapon EquipmentSlot = iota
+	SlotWeapon1 EquipmentSlot = iota
+	SlotWeapon2
 	SlotArmor
+	SlotHead
+	SlotLegs
+	SlotCharm
+	SlotBag
+	SlotAmmo1
+	SlotAmmo2
+	SlotAmmo3
 	SlotAccessory
+	SlotCarry
 )
 const (
 	CategoryAmmo ItemCategory = iota
-	CategoryTile
 	CategoryPotion
 	CategoryWeapon
 	CategoryArmor
+	CategoryLegs
+	CategoryHead
 	CategoryAccessory
 	CategoryGrenade
 	CategoryTool
-	CategoryChest
 	CategoryCharm
 	CategoryBag
 )
 
+type ItemID string
 type ItemBase struct {
-	ID          string
+	ID          ItemID
 	Name        string
 	Description string
 	Weight      int
@@ -33,6 +43,15 @@ type ItemBase struct {
 type Item interface {
 	Base() *ItemBase
 	Category() ItemCategory
+}
+
+type StatModifiers struct {
+	HealthBonus        int
+	AttackBonus        int
+	MoveRangeBonus     int
+	MoveActionsBonus   int
+	AttackActionsBonus int
+	CarryLimitBonus    int
 }
 
 /////

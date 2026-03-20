@@ -75,6 +75,8 @@ func MustLoadAll() core.Assets {
 			core.CategoryCharm:  mustTrimmedImage("charm_gray.png"),
 			core.CategoryWeapon: mustTrimmedImage("weapon_gray.png"),
 			core.CategoryPotion: mustTrimmedImage("potion_gray.png"),
+			core.CategoryLegs:   mustTrimmedImage("legs_gray.png"),
+			core.CategoryHead:   mustTrimmedImage("head_gray.png"),
 		},
 		ShopImages: map[core.ItemCategory]*ebiten.Image{
 			core.CategoryAmmo:   mustTrimmedImage("ammo_shop.png"),
@@ -82,6 +84,10 @@ func MustLoadAll() core.Assets {
 			core.CategoryCharm:  mustTrimmedImage("charm_shop.png"),
 			core.CategoryWeapon: mustTrimmedImage("weapon_shop.png"),
 			core.CategoryPotion: mustTrimmedImage("potion_shop.png"),
+		},
+		ItemIcons: map[core.ItemID]*ebiten.Image{
+			"commanders_coat":   mustTrimmedImage("commanders_coat.png"),
+			"commanders_pistol": mustTrimmedImage("commanders_pistol.png"),
 		},
 		FrameTemplate:   mustTrimmedImage("frame_template.png"),
 		ChestButtonIcon: mustTrimmedImage("chest_shop.png"),

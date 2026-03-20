@@ -352,14 +352,52 @@ func (ps *PlayScreen) enemyTryBestAttack(g core.Game, ex, ey int) bool {
 
 	if target.CurrentHealth <= 0 {
 		attacker.BattleStats.Kills++
-		bestTargetTile.Unit = nil
+		ps.killUnit(target, bestTargetTile, g)
 		ps.addBattleLog(target.Name + " was defeated")
+
 	}
 
 	ps.resolveBattleResult(g)
 	return true
 }
+func (ps *PlayScreen) removeUnitFromRoster(target *core.Unit, g core.Game) {
+	if target == nil {
+		return
+	}
 
+	for _, p := range g.Players() {
+		if p == nil || p.Playerid != target.Playerid {
+			continue
+		}
+
+		for i, u := range p.Units {
+			if u == target || u.UnitId == target.UnitId {
+				p.Units = append(p.Units[:i], p.Units[i+1:]...)
+				return
+			}
+		}
+	}
+}
+func (ps *PlayScreen) killUnit(target *core.Unit, tile *core.Tile, g core.Game) {
+	if target == nil {
+		return
+	}
+
+	tile.Unit = nil
+	ps.removeUnitFromRoster(target, g)
+
+	if ps.battle.Selected == target {
+		ps.battle.Selected = nil
+		ps.battle.SelectedAction = nil
+		ps.battle.ActionMenuOpen = false
+	}
+
+	if ps.setup.Selected == target {
+		ps.setup.Selected = nil
+	}
+
+	ps.addBattleLog(target.Name + " was defeated")
+}
 func enemyAttackActionScore(attacker *core.Unit, action *core.UnitAction, target *core.Unit) int {
 	score := 0
 

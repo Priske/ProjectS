@@ -10,6 +10,7 @@ type Assets struct {
 	LocationImages  map[LocationType]*ebiten.Image
 	ShopImages      map[ItemCategory]*ebiten.Image
 	SlotIcons       map[ItemCategory]*ebiten.Image
+	ItemIcons       map[ItemID]*ebiten.Image
 	FrameTemplate   *ebiten.Image
 	ChestButtonIcon *ebiten.Image
 	ShopButtonIcon  *ebiten.Image

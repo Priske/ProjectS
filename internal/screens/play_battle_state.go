@@ -20,6 +20,10 @@ type BattleState struct {
 	Log []string
 }
 
+func (ps *PlayScreen) resetBattleTurnState() {
+	ps.battle.Turn = TurnState{}
+}
+
 type boardUnitRef struct {
 	U *core.Unit
 	X int

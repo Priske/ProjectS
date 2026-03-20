@@ -106,6 +106,51 @@ func defaultSoldierActions(moveRange int, attackUses int) []UnitAction {
 
 }
 
+func defaulSniperActions(moveRange int, attackUses int) []UnitAction {
+	return []UnitAction{
+		{
+			ID:          "move",
+			Name:        "Move",
+			Kind:        ActionMove,
+			Range:       moveRange,
+			Power:       0,
+			UsesPerTurn: 1,
+			Description: "Move across the battlefield",
+		},
+		{
+			ID:          "basic_attack",
+			Name:        "Sniper Rifle",
+			Kind:        ActionAttack,
+			Range:       4,
+			Power:       0,
+			UsesPerTurn: attackUses,
+			Description: "Basic sniper rifle attack",
+		},
+	}
+}
+func defaulMedicActions(moveRange int, attackUses int) []UnitAction {
+	return []UnitAction{
+		{
+			ID:          "move",
+			Name:        "Move",
+			Kind:        ActionMove,
+			Range:       moveRange,
+			Power:       0,
+			UsesPerTurn: 1,
+			Description: "Move across the battlefield",
+		},
+		{
+			ID:          "basic_attack",
+			Name:        "Pistol",
+			Kind:        ActionAttack,
+			Range:       1,
+			Power:       0,
+			UsesPerTurn: attackUses,
+			Description: "Basic melee attack",
+		},
+	}
+}
+
 func defaultCultistLordActions(moveRange int, attackUses int) []UnitAction {
 	return []UnitAction{
 		{
@@ -127,5 +172,4 @@ func defaultCultistLordActions(moveRange int, attackUses int) []UnitAction {
 			Description: "Ranged fire bolt",
 		},
 	}
-
 }

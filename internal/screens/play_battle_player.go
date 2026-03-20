@@ -30,7 +30,6 @@ func (ps *PlayScreen) trySelectUnit(g core.Game, mx, my int) bool {
 	ps.battle.SelectedY = cy
 	ps.battle.SelectedAction = firstAttackAction(u)
 
-	ps.addBattleLog(fmt.Sprintf("Selected %v (%d,%d)", u.Type, cx, cy))
 	return true
 }
 func (ps *PlayScreen) tryMoveUnit(g core.Game, u *core.Unit, fromX, fromY, toX, toY int) bool {

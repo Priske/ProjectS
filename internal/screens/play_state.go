@@ -34,11 +34,13 @@ func (ps *PlayScreen) buildBattleUI(g core.Game) {
 	}
 }
 func (ps *PlayScreen) swapAndResetUI(build func(core.Game), g core.Game) {
+
 	ps.ui.widgets = nil
 	ps.ui.modal = nil
 	ps.ui.overlay = nil
 	build(g)
 }
+
 func NewPlayScreen(g core.Game) *PlayScreen {
 	ps := &PlayScreen{}
 	ps.enterSetup(g)

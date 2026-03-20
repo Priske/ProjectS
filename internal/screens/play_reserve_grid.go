@@ -12,15 +12,15 @@ import (
 func (ps *PlayScreen) makeUnitsGrid(g core.Game) *GUI.GridField {
 	unitCount := len(ps.setup.unPlacedUnits)
 
-	// fixed 5 columns, variable rows
-	cols := 5
+	// fixed 4 columns, variable rows
+	cols := 4
 	if unitCount < cols {
 		cols = unitCount
 		if cols == 0 {
 			cols = 1
 		}
 	}
-	rows := int(math.Ceil(float64(unitCount) / 5.0))
+	rows := int(math.Ceil(float64(unitCount) / 4.0))
 	if rows == 0 {
 		rows = 1
 	}
@@ -35,6 +35,16 @@ func (ps *PlayScreen) makeUnitsGrid(g core.Game) *GUI.GridField {
 			return nil
 		}
 		return ps.setup.unPlacedUnits[i]
+	}
+	grid.OnCellClick = func(cx, cy int) {
+		payload := grid.Get(cx, cy)
+		u, ok := payload.(*core.Unit)
+		if !ok || u == nil {
+			return
+		}
+
+		ps.setup.Selected = u
+
 	}
 	grid.OnBeginDrag = func(cx, cy int, payload any) {
 		u, ok := payload.(*core.Unit)

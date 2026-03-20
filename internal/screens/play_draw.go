@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"image/color"
 
+	"github.com/Priske/ProjectS/interaction"
 	"github.com/Priske/ProjectS/internal/core"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
@@ -45,13 +46,18 @@ func (ps *PlayScreen) drawUnits(g core.Game, screen *ebiten.Image) {
 
 	for y := 0; y < s.BoardH; y++ {
 		for x := 0; x < s.BoardW; x++ {
-			if ps.drag.Active && x == ps.drag.FromX && y == ps.drag.FromY {
+			if ps.drag.Active &&
+				ps.drag.Source == interaction.DragFromBoard &&
+				x == ps.drag.FromX &&
+				y == ps.drag.FromY {
 				continue
 			}
+
 			tile := g.Board().Location[y][x]
 			if tile.Unit == nil {
 				continue
 			}
+
 			drawUnitImage(screen, assets, tile.Unit.Type, offX+x*s.CellSize, offY+y*s.CellSize, s.CellSize)
 		}
 	}
@@ -602,7 +608,7 @@ func drawInventoryPanelLayout(screen *ebiten.Image, assets core.Assets, px, py, 
 	// Row 2: armor, carry (temporary stand-in still needed if no carry icon exists yet)
 	row2Y := startY + slotSize + gap
 	drawEquipmentSlot(screen, assets, core.CategoryArmor, startX, row2Y, slotSize)
-	drawEquipmentSlot(screen, assets, core.CategoryChest, startX+slotSize+gap, row2Y, slotSize)
+	//drawEquipmentSlot(screen, assets, core.CategoryChest, startX+slotSize+gap, row2Y, slotSize)
 
 	// Row 3: accessories
 	row3Y := row2Y + slotSize + gap + 8

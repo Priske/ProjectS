@@ -7,6 +7,7 @@ type Armor struct {
 	Capacity  map[ItemCategory]int
 	Stored    []Item
 	Actions   []UnitAction
+	slot      EquipmentSlot
 }
 
 func (a *Armor) Base() *ItemBase                     { return &a.ItemBase }
@@ -16,12 +17,3 @@ func (a *Armor) StoredItems() []Item                 { return a.Stored }
 func (a *Armor) CarryCapacity() map[ItemCategory]int { return a.Capacity }
 func (a *Armor) StatModifiers() StatModifiers        { return a.Modifiers }
 func (a *Armor) GrantedActions() []UnitAction        { return a.Actions }
-
-type StatModifiers struct {
-	HealthBonus        int
-	AttackBonus        int
-	MoveRangeBonus     int
-	MoveActionsBonus   int
-	AttackActionsBonus int
-	CarryLimitBonus    int
-}
