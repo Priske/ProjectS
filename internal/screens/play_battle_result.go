@@ -135,6 +135,7 @@ func (ps *PlayScreen) handleBattleVictory(g core.Game) {
 	ps.openRewardModal(g)
 	ps.setup.setupMode = true
 	ps.healAllPlayerUnits(g)
+	g.AdvanceEncounter()
 }
 
 func (ps *PlayScreen) handleBattleDefeat(g core.Game) {
@@ -149,6 +150,7 @@ func (ps *PlayScreen) exitBattle() {
 	ps.battle.ActionMenuOpen = false
 	ps.battle.Log = nil
 	ps.resetBattleTurnState()
+
 }
 
 func (ps *PlayScreen) openRewardModal(g core.Game) {

@@ -17,6 +17,10 @@ type Game interface {
 	NextTurn()
 	InitializeStartingUnitsEnemy(playerId int) []*Unit
 	NewUnitID() int
+	StartNewRun()
+	GenerateEncounterEnemies(playerId int) []*Unit
+	Run() *RunState
+	AdvanceEncounter()
 }
 
 type Screen interface {

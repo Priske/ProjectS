@@ -14,6 +14,9 @@ type Assets struct {
 	FrameTemplate   *ebiten.Image
 	ChestButtonIcon *ebiten.Image
 	ShopButtonIcon  *ebiten.Image
+	Crosshair       *ebiten.Image
+	HealCrosshair   *ebiten.Image
+	DefendCrosshair *ebiten.Image
 }
 
 func (a *Assets) UnitImage(t UnitType) *ebiten.Image {

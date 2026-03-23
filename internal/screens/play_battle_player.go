@@ -101,78 +101,33 @@ func (ps *PlayScreen) tryMoveUnit(g core.Game, u *core.Unit, fromX, fromY, toX, 
 	ps.addBattleLog(fmt.Sprintf("Unit moved to (%d,%d)", toX, toY))
 	return true
 }
-func (ps *PlayScreen) tryAttackWithSelectedAction(g core.Game, action *core.UnitAction, targetX, targetY int) bool {
+func (ps *PlayScreen) tryUseSelectedAction(g core.Game, action *core.UnitAction, targetX, targetY int) bool {
 	if ps.battle.Selected == nil || action == nil {
 		return false
 	}
 	if ps.battle.Turn.Side != TurnPlayer {
 		return false
 	}
-	if action.Kind != core.ActionAttack {
+
+	user := ps.battle.Selected
+
+	if !ps.battle.Turn.CanUseTurnAction(user) {
+		return false
+	}
+	if !ps.battle.Turn.CanUseNamedAction(user, action.ID, action.UsesPerTurn) {
 		return false
 	}
 
-	attacker := ps.battle.Selected
-
-	if !ps.battle.Turn.CanAttack(attacker) {
-		return false
-	}
-	if !ps.battle.Turn.CanUseNamedAction(attacker, action.ID, action.UsesPerTurn) {
+	if !ps.useAction(g, user, action, targetX, targetY) {
 		return false
 	}
 
-	fromX := ps.battle.SelectedX
-	fromY := ps.battle.SelectedY
+	ps.battle.Turn.MarkActionUsed(user)
+	ps.battle.Turn.MarkNamedActionUsed(user, action.ID)
 
-	dx := abs(targetX - fromX)
-	dy := abs(targetY - fromY)
-	dist := dx + dy
-	if dist == 0 || dist > action.Range {
-		return false
+	if actionLocksInput(action) {
+		ps.battle.SelectedAction = nil
 	}
 
-	board := g.Board()
-
-	if fromY < 0 || fromY >= len(board.Location) || fromX < 0 || fromX >= len(board.Location[fromY]) {
-		return false
-	}
-	if targetY < 0 || targetY >= len(board.Location) || targetX < 0 || targetX >= len(board.Location[targetY]) {
-		return false
-	}
-
-	src := &board.Location[fromY][fromX]
-	dst := &board.Location[targetY][targetX]
-
-	if src.Unit == nil || dst.Unit == nil {
-		return false
-	}
-
-	defender := dst.Unit
-	if attacker.Playerid == defender.Playerid {
-		return false
-	}
-
-	damage := actionDamage(attacker, action)
-
-	defender.CurrentHealth -= damage
-	if defender.CurrentHealth < 0 {
-		defender.CurrentHealth = 0
-	}
-
-	defender.BattleStats.DamageTaken += damage
-	attacker.BattleStats.DamageDealt += damage
-
-	ps.battle.Turn.MarkAttacked(attacker)
-	ps.battle.Turn.MarkNamedActionUsed(attacker, action.ID)
-
-	ps.addBattleLog(fmt.Sprintf("%s used %s on %s", attacker.Name, action.Name, defender.Name))
-
-	if defender.CurrentHealth <= 0 {
-		dst.Unit = nil
-		attacker.BattleStats.Kills++
-		ps.addBattleLog("Enemy defeated")
-	}
-
-	ps.resolveBattleResult(g)
 	return true
 }

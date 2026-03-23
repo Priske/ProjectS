@@ -40,15 +40,6 @@ func (k ActionKind) String() string {
 func defaultMeleeActions(moveRange int, attackUses int) []UnitAction {
 	return []UnitAction{
 		{
-			ID:          "move",
-			Name:        "Move",
-			Kind:        ActionMove,
-			Range:       moveRange,
-			Power:       0,
-			UsesPerTurn: 1,
-			Description: "Move across the battlefield",
-		},
-		{
 			ID:          "basic_attack",
 			Name:        "Pistol",
 			Kind:        ActionAttack,
@@ -59,17 +50,31 @@ func defaultMeleeActions(moveRange int, attackUses int) []UnitAction {
 		},
 	}
 }
-func defaultCultistMeleeActions(moveRange int, attackUses int) []UnitAction {
+func defaultShieldActions(moveRange int, attackUses int) []UnitAction {
 	return []UnitAction{
 		{
-			ID:          "move",
-			Name:        "Move",
-			Kind:        ActionMove,
-			Range:       moveRange,
+			ID:          "basic_attack",
+			Name:        "Shield_Bash",
+			Kind:        ActionAttack,
+			Range:       1,
 			Power:       0,
-			UsesPerTurn: 1,
-			Description: "Move across the battlefield",
+			UsesPerTurn: attackUses,
+			Description: "Shield_Bash",
 		},
+		{
+			ID:          "defend",
+			Name:        "defend",
+			Kind:        ActionAttack,
+			Range:       1,
+			Power:       0,
+			UsesPerTurn: attackUses,
+			Description: "defend",
+		},
+	}
+}
+func defaultCultistMeleeActions(moveRange int, attackUses int) []UnitAction {
+	return []UnitAction{
+
 		{
 			ID:          "basic_attack",
 			Name:        "Stab",
@@ -82,17 +87,23 @@ func defaultCultistMeleeActions(moveRange int, attackUses int) []UnitAction {
 	}
 }
 
+func defaultRatBroodLordActions(moveRange int, attackUses int) []UnitAction {
+	return []UnitAction{
+
+		{
+			ID:          "spawn_rats",
+			Name:        "Spawn",
+			Kind:        ActionSupport,
+			Range:       0,
+			Power:       0,
+			UsesPerTurn: attackUses,
+			Description: "Spawn rats",
+		},
+	}
+}
 func defaultSoldierActions(moveRange int, attackUses int) []UnitAction {
 	return []UnitAction{
-		{
-			ID:          "move",
-			Name:        "Move",
-			Kind:        ActionMove,
-			Range:       moveRange,
-			Power:       0,
-			UsesPerTurn: 1,
-			Description: "Move across the battlefield",
-		},
+
 		{
 			ID:          "basic_attack",
 			Name:        "Rifle",
@@ -105,18 +116,34 @@ func defaultSoldierActions(moveRange int, attackUses int) []UnitAction {
 	}
 
 }
+func defaultMedicActions(moveRange int, attackUses int) []UnitAction {
+	return []UnitAction{
+
+		{
+			ID:          "basic_attack",
+			Name:        "Pistol",
+			Kind:        ActionAttack,
+			Range:       1,
+			Power:       0,
+			UsesPerTurn: attackUses,
+			Description: "Basic ranged attack",
+		},
+		{
+			ID:          "heal",
+			Name:        "heal",
+			Kind:        ActionSupport,
+			Range:       1,
+			Power:       2,
+			UsesPerTurn: attackUses,
+			Description: "Basic healing action",
+		},
+	}
+
+}
 
 func defaulSniperActions(moveRange int, attackUses int) []UnitAction {
 	return []UnitAction{
-		{
-			ID:          "move",
-			Name:        "Move",
-			Kind:        ActionMove,
-			Range:       moveRange,
-			Power:       0,
-			UsesPerTurn: 1,
-			Description: "Move across the battlefield",
-		},
+
 		{
 			ID:          "basic_attack",
 			Name:        "Sniper Rifle",
@@ -130,15 +157,7 @@ func defaulSniperActions(moveRange int, attackUses int) []UnitAction {
 }
 func defaulMedicActions(moveRange int, attackUses int) []UnitAction {
 	return []UnitAction{
-		{
-			ID:          "move",
-			Name:        "Move",
-			Kind:        ActionMove,
-			Range:       moveRange,
-			Power:       0,
-			UsesPerTurn: 1,
-			Description: "Move across the battlefield",
-		},
+
 		{
 			ID:          "basic_attack",
 			Name:        "Pistol",
@@ -153,15 +172,7 @@ func defaulMedicActions(moveRange int, attackUses int) []UnitAction {
 
 func defaultCultistLordActions(moveRange int, attackUses int) []UnitAction {
 	return []UnitAction{
-		{
-			ID:          "move",
-			Name:        "Move",
-			Kind:        ActionMove,
-			Range:       moveRange,
-			Power:       0,
-			UsesPerTurn: 1,
-			Description: "Move across the battlefield",
-		},
+
 		{
 			ID:          "basic_attack",
 			Name:        "fire bolt",
@@ -170,6 +181,21 @@ func defaultCultistLordActions(moveRange int, attackUses int) []UnitAction {
 			Power:       0,
 			UsesPerTurn: attackUses,
 			Description: "Ranged fire bolt",
+		},
+	}
+}
+
+func defaultCultistShieldActions(moveRange int, attackUses int) []UnitAction {
+	return []UnitAction{
+
+		{
+			ID:          "basic_attack",
+			Name:        "Shield bash",
+			Kind:        ActionAttack,
+			Range:       1,
+			Power:       0,
+			UsesPerTurn: attackUses,
+			Description: "Shield bash",
 		},
 	}
 }

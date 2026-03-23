@@ -103,49 +103,49 @@ func (ps *PlayScreen) makeSetupRightSidebar(g core.Game) core.Widget {
 
 	actionsPanel.SetPos(sidebarX+padding, sidebarY+padding)
 	inventoryPanel.SetPos(sidebarX+padding, sidebarY+padding+actionsH+gap)
+	/*
+		contentX := inventoryPanel.X + 14
+		contentY := inventoryPanel.Y + 40
+		contentW := inventoryPanel.W - 28
+		if contentW < 0 {
+			contentW = 0
+		}
 
-	contentX := inventoryPanel.X + 14
-	contentY := inventoryPanel.Y + 40
-	contentW := inventoryPanel.W - 28
-	if contentW < 0 {
-		contentW = 0
-	}
+		selectedLabel := &SetupSelectedLabelWidget{
+			ps: ps,
+			X:  contentX,
+			Y:  contentY,
+		}
 
-	selectedLabel := &SetupSelectedLabelWidget{
-		ps: ps,
-		X:  contentX,
-		Y:  contentY,
-	}
+			slotGrid := ps.makeSetupInventoryGrid(g, 0, 0)
+			actionGrid := ps.makeSetupInventoryActionGrid(g, 0, 0)
 
-	slotGrid := ps.makeSetupInventoryGrid(g, 0, 0)
-	actionGrid := ps.makeSetupInventoryActionGrid(g, 0, 0)
+			slotCell := 64
+			slotGridW := 3 * slotCell
 
-	slotCell := 64
-	slotGridW := 3 * slotCell
+			actionCell := 112
+			actionGridW := 2 * actionCell
+			actionGridH := actionCell
 
-	actionCell := 112
-	actionGridW := 2 * actionCell
-	actionGridH := actionCell
+			slotGridX := contentX + (contentW-slotGridW)/2
+			slotGridY := contentY + 26
 
-	slotGridX := contentX + (contentW-slotGridW)/2
-	slotGridY := contentY + 26
+			actionGridX := contentX + (contentW-actionGridW)/2
+			actionGridY := inventoryPanel.Y + inventoryPanel.H - actionGridH - 28
 
-	actionGridX := contentX + (contentW-actionGridW)/2
-	actionGridY := inventoryPanel.Y + inventoryPanel.H - actionGridH - 28
+			if p, ok := slotGrid.(core.Positionable); ok {
+				p.SetPos(slotGridX, slotGridY)
+			}
+			if p, ok := actionGrid.(core.Positionable); ok {
+				p.SetPos(actionGridX, actionGridY)
+			}
 
-	if p, ok := slotGrid.(core.Positionable); ok {
-		p.SetPos(slotGridX, slotGridY)
-	}
-	if p, ok := actionGrid.(core.Positionable); ok {
-		p.SetPos(actionGridX, actionGridY)
-	}
-
-	inventoryPanel.Children = []core.Widget{
-		selectedLabel,
-		slotGrid,
-		actionGrid,
-	}
-
+			inventoryPanel.Children = []core.Widget{
+				selectedLabel,
+				slotGrid,
+				actionGrid,
+			}
+	*/
 	sidebar := GUI.MakePanel(sidebarX, sidebarY, sidebarW, sidebarH, "", []core.Widget{
 		actionsPanel,
 		inventoryPanel,

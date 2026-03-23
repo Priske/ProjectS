@@ -3,6 +3,7 @@ package screens
 import (
 	"fmt"
 	"image/color"
+	"math"
 
 	"github.com/Priske/ProjectS/interaction"
 	"github.com/Priske/ProjectS/internal/core"
@@ -338,12 +339,16 @@ func (ps *PlayScreen) drawBattleActionCursor(g core.Game, screen *ebiten.Image) 
 		return
 	}
 
-	switch ps.battle.SelectedAction.Kind {
-	case core.ActionAttack:
+	switch ps.battle.SelectedAction.ID {
+	case "basic_attack":
+		// attack can stay "soft selected"; no special cursor lock here
 		ps.drawAttackCursor(g, screen)
+		return
+
+	case "heal":
+		ps.drawHealCursor(g, screen)
 	}
 }
-
 func (ps *PlayScreen) drawAttackCursor(g core.Game, screen *ebiten.Image) {
 	if !ps.canAttackHoveredCell(g) {
 		return
@@ -357,38 +362,52 @@ func (ps *PlayScreen) drawAttackCursor(g core.Game, screen *ebiten.Image) {
 
 	px, py := cellTopLeft(g, cx, cy)
 	size := g.Settings().CellSize
-	col := color.RGBA{255, 60, 60, 255}
 
-	cornerLen := size / 4
-	thick := 2
+	crosshair := g.Assets().Crosshair
+	if crosshair == nil {
+		return
+	}
 
-	// top-left corner
-	ebitenutil.DrawRect(screen, float64(px), float64(py), float64(cornerLen), float64(thick), col)
-	ebitenutil.DrawRect(screen, float64(px), float64(py), float64(thick), float64(cornerLen), col)
+	padding := size / 10
 
-	// top-right corner
-	ebitenutil.DrawRect(screen, float64(px+size-cornerLen), float64(py), float64(cornerLen), float64(thick), col)
-	ebitenutil.DrawRect(screen, float64(px+size-thick), float64(py), float64(thick), float64(cornerLen), col)
-
-	// bottom-left corner
-	ebitenutil.DrawRect(screen, float64(px), float64(py+size-thick), float64(cornerLen), float64(thick), col)
-	ebitenutil.DrawRect(screen, float64(px), float64(py+size-cornerLen), float64(thick), float64(cornerLen), col)
-
-	// bottom-right corner
-	ebitenutil.DrawRect(screen, float64(px+size-cornerLen), float64(py+size-thick), float64(cornerLen), float64(thick), col)
-	ebitenutil.DrawRect(screen, float64(px+size-thick), float64(py+size-cornerLen), float64(thick), float64(cornerLen), col)
-
-	// small center dot
-	ebitenutil.DrawRect(
+	drawImageCentered(
 		screen,
-		float64(px+size/2-1),
-		float64(py+size/2-1),
-		2,
-		2,
-		col,
+		crosshair,
+		px+padding,
+		py+padding,
+		size-(padding*2),
+		size-(padding*2),
 	)
 }
+func (ps *PlayScreen) drawHealCursor(g core.Game, screen *ebiten.Image) {
+	if !ps.canHealHoveredCell(g) {
+		return
+	}
 
+	in := g.Input()
+	cx, cy, ok := mouseToCell(g, in.MX, in.MY)
+	if !ok {
+		return
+	}
+
+	px, py := cellTopLeft(g, cx, cy)
+	size := g.Settings().CellSize
+
+	crosshair := g.Assets().HealCrosshair
+	if crosshair == nil {
+		return
+	}
+
+	padding := size / 10
+	drawImageCentered(
+		screen,
+		crosshair,
+		px+padding,
+		py+padding,
+		size-(padding*2),
+		size-(padding*2),
+	)
+}
 func (ps *PlayScreen) canAttackHoveredCell(g core.Game) bool {
 	if ps.battle.Selected == nil || ps.battle.SelectedAction == nil {
 		return false
@@ -419,6 +438,44 @@ func (ps *PlayScreen) canAttackHoveredCell(g core.Game) bool {
 
 	return dist > 0 && dist <= ps.battle.SelectedAction.Range
 }
+func (ps *PlayScreen) canHealHoveredCell(g core.Game) bool {
+	if ps.battle.Selected == nil || ps.battle.SelectedAction == nil {
+		return false
+	}
+
+	action := ps.battle.SelectedAction
+	if action.ID != "heal" {
+		return false
+	}
+
+	in := g.Input()
+	cx, cy, ok := mouseToCell(g, in.MX, in.MY)
+	if !ok {
+		return false
+	}
+
+	board := g.Board()
+	if cy < 0 || cy >= len(board.Location) || cx < 0 || cx >= len(board.Location[cy]) {
+		return false
+	}
+
+	target := board.Location[cy][cx].Unit
+	if target == nil {
+		return false
+	}
+	if target.Playerid != ps.battle.Selected.Playerid {
+		return false
+	}
+	if target.CurrentHealth >= target.MaxHealth {
+		return false
+	}
+
+	fromX := ps.battle.SelectedX
+	fromY := ps.battle.SelectedY
+	dist := abs(cx-fromX) + abs(cy-fromY)
+
+	return dist <= action.Range
+}
 func (ps *PlayScreen) drawSelectedActionOverlay(g core.Game, screen *ebiten.Image) {
 	if !ps.battle.Active || ps.battle.SelectedAction == nil {
 		return
@@ -427,11 +484,16 @@ func (ps *PlayScreen) drawSelectedActionOverlay(g core.Game, screen *ebiten.Imag
 	switch ps.battle.SelectedAction.Kind {
 	case core.ActionMove:
 		ps.drawMoveRange(g, screen)
+
 	case core.ActionAttack:
 		ps.drawAttackRange(g, screen)
 		ps.drawAttackTargetLine(g, screen)
-		ps.drawAttackCursor(g, screen)
+
+	case core.ActionSupport, core.ActionSkill:
+		// no range box/line yet, just cursor
 	}
+
+	ps.drawBattleActionCursor(g, screen)
 }
 
 func (ps *PlayScreen) drawAttackRange(g core.Game, screen *ebiten.Image) {
@@ -502,10 +564,40 @@ func (ps *PlayScreen) drawAttackTargetLine(g core.Game, screen *ebiten.Image) {
 
 	x1 := sx + size/2
 	y1 := sy + size/2
-	x2 := tx + size/2
-	y2 := ty + size/2
 
-	ebitenutil.DrawLine(screen, float64(x1), float64(y1), float64(x2), float64(y2), color.RGBA{255, 60, 60, 180})
+	targetCenterX := tx + size/2
+	targetCenterY := ty + size/2
+
+	dx := float64(targetCenterX - x1)
+	dy := float64(targetCenterY - y1)
+
+	if dx == 0 && dy == 0 {
+		return
+	}
+
+	half := float64(size) / 2.0
+
+	var scale float64
+	absDX := math.Abs(dx)
+	absDY := math.Abs(dy)
+
+	if absDX > absDY {
+		scale = half / absDX
+	} else {
+		scale = half / absDY
+	}
+
+	x2 := float64(targetCenterX) - dx*scale
+	y2 := float64(targetCenterY) - dy*scale
+
+	ebitenutil.DrawLine(
+		screen,
+		float64(x1),
+		float64(y1),
+		x2,
+		y2,
+		color.RGBA{255, 60, 60, 180},
+	)
 }
 
 func drawImageCentered(dst *ebiten.Image, img *ebiten.Image, px, py, w, h int) {

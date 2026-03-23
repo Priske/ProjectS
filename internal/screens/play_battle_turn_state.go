@@ -10,8 +10,8 @@ const (
 )
 
 type UnitTurnState struct {
-	RemainingMoveActions   int
-	RemainingAttackActions int
+	RemainingMoveActions int
+	RemainingActions     int
 
 	ActionUses map[string]int
 }
@@ -24,9 +24,9 @@ type TurnState struct {
 
 func makeUnitTurnState(u *core.Unit) UnitTurnState {
 	return UnitTurnState{
-		RemainingMoveActions:   u.MoveActionsPerTurn,
-		RemainingAttackActions: u.AttackActionsPerTurn,
-		ActionUses:             make(map[string]int),
+		RemainingMoveActions: u.MoveActionsPerTurn,
+		RemainingActions:     u.AttackActionsPerTurn,
+		ActionUses:           make(map[string]int),
 	}
 }
 
@@ -61,12 +61,12 @@ func (t *TurnState) CanMove(u *core.Unit) bool {
 	return s.RemainingMoveActions > 0
 }
 
-func (t *TurnState) CanAttack(u *core.Unit) bool {
+func (t *TurnState) CanUseTurnAction(u *core.Unit) bool {
 	if u == nil {
 		return false
 	}
 	s := t.ensureUnitState(u)
-	return s.RemainingAttackActions > 0
+	return s.RemainingActions > 0
 }
 
 func (t *TurnState) MarkMoved(u *core.Unit) {
@@ -82,15 +82,15 @@ func (t *TurnState) MarkMoved(u *core.Unit) {
 	t.Units[u.UnitId] = s
 }
 
-func (t *TurnState) MarkAttacked(u *core.Unit) {
+func (t *TurnState) MarkActionUsed(u *core.Unit) {
 	if u == nil {
 		return
 	}
 
 	t.ensureUnit(u)
 	s := t.Units[u.UnitId]
-	if s.RemainingAttackActions > 0 {
-		s.RemainingAttackActions--
+	if s.RemainingActions > 0 {
+		s.RemainingActions--
 	}
 	t.Units[u.UnitId] = s
 }

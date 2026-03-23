@@ -26,6 +26,7 @@ func MakeNewSoldier(playerId, unitId int) *Unit {
 	u.AttackActionsPerTurn = 1
 	u.Actions = defaultSoldierActions(2, 1)
 	u.UnitCategory = Attack
+	u.AIKind = AIKindDefaultAggro
 	return &u
 }
 
@@ -34,7 +35,7 @@ func MakeNewCommander(playerId, unitId int) *Unit {
 	u.MaxHealth = 5
 	u.CurrentHealth = 5
 	u.AttackPower = 1
-	u.Experience = 6
+	u.Experience = 0
 	u.MoveRange = 1
 	u.MoveActionsPerTurn = 1
 	u.AttackActionsPerTurn = 1
@@ -42,6 +43,7 @@ func MakeNewCommander(playerId, unitId int) *Unit {
 	u.UnitCategory = Flag
 	u.Equipped[SlotWeapon1] = MakeCommandersPistol()
 	u.Equipped[SlotArmor] = MakeCommandersCoat()
+	u.AIKind = AIKindDefaultAggro
 	return &u
 }
 
@@ -54,8 +56,9 @@ func MakeNewMedic(playerId, unitId int) *Unit {
 	u.MoveRange = 1
 	u.MoveActionsPerTurn = 1
 	u.AttackActionsPerTurn = 1
-	u.Actions = defaultMeleeActions(1, 1)
+	u.Actions = defaultMedicActions(1, 1)
 	u.UnitCategory = Support
+	u.AIKind = AIKindDefaultAggro
 	return &u
 }
 
@@ -68,8 +71,9 @@ func MakeNewShield(playerId, unitId int) *Unit {
 	u.MoveRange = 1
 	u.MoveActionsPerTurn = 1
 	u.AttackActionsPerTurn = 1
-	u.Actions = defaultMeleeActions(1, 1)
+	u.Actions = defaultShieldActions(1, 1)
 	u.UnitCategory = Defense
+	u.AIKind = AIKindDefaultAggro
 	return &u
 }
 
@@ -84,6 +88,7 @@ func MakeNewSniper(playerId, unitId int) *Unit {
 	u.AttackActionsPerTurn = 1
 	u.Actions = defaulSniperActions(1, 1)
 	u.UnitCategory = Attack
+	u.AIKind = AIKindDefaultAggro
 	return &u
 }
 
@@ -93,11 +98,12 @@ func MakeNewEnemyCultistKnife(playerId, unitId int) *Unit {
 	u.CurrentHealth = 4
 	u.AttackPower = 2
 	u.Experience = 0
-	u.MoveRange = 3
+	u.MoveRange = 2
 	u.MoveActionsPerTurn = 1
 	u.AttackActionsPerTurn = 1
 	u.Actions = defaultCultistMeleeActions(3, 1)
 	u.UnitCategory = Attack
+	u.AIKind = AIKindDefaultAggro
 	return &u
 }
 
@@ -112,6 +118,49 @@ func MakeNewEnemyCultistLord(playerId, unitId int) *Unit {
 	u.AttackActionsPerTurn = 1
 	u.Actions = defaultCultistLordActions(1, 1)
 	u.UnitCategory = Flag
+	u.AIKind = AIKindDefaultAggro
+	return &u
+}
+func MakeNewEnemyCultistShield(playerId, unitId int) *Unit {
+	u := newBaseUnit(playerId, unitId, Enemy_cultist_shield)
+	u.MaxHealth = 7
+	u.CurrentHealth = 4
+	u.AttackPower = 2
+	u.Experience = 0
+	u.MoveRange = 1
+	u.MoveActionsPerTurn = 1
+	u.AttackActionsPerTurn = 1
+	u.Actions = defaultCultistShieldActions(1, 1)
+	u.UnitCategory = Attack
+	u.AIKind = AIKindDefaultAggro
+	return &u
+}
+func MakeNewEnemyRatKnife(playerId, unitId int) *Unit {
+	u := newBaseUnit(playerId, unitId, Enemy_rat_knife)
+	u.MaxHealth = 2
+	u.CurrentHealth = 2
+	u.AttackPower = 1
+	u.Experience = 0
+	u.MoveRange = 3
+	u.MoveActionsPerTurn = 1
+	u.AttackActionsPerTurn = 1
+	u.Actions = defaultCultistMeleeActions(1, 1)
+	u.UnitCategory = Attack
+	u.AIKind = AIKindDefaultAggro
+	return &u
+}
+func MakeNewEnemyRatBroodLord(playerId, unitId int) *Unit {
+	u := newBaseUnit(playerId, unitId, Enemy_rat_brood_lord)
+	u.MaxHealth = 8
+	u.CurrentHealth = 8
+	u.AttackPower = 0
+	u.Experience = 0
+	u.MoveRange = 1
+	u.MoveActionsPerTurn = 1
+	u.AttackActionsPerTurn = 1
+	u.Actions = defaultRatBroodLordActions(1, 1)
+	u.UnitCategory = Flag
+	u.AIKind = AIKindBroodLord
 	return &u
 }
 
@@ -149,7 +198,13 @@ func GenerateUnitName(t UnitType) string {
 
 	case Commander:
 		return commanderNames[rand.Intn(len(commanderNames))]
-	}
 
+	case Enemy_cultist_knife, Enemy_cultist_lord, Enemy_cultist_shield:
+		return "Cultist"
+	case Enemy_rat_brood_lord:
+		return "Brood Lord Rhatt"
+	case Enemy_rat_knife, Enemy_rat_axes:
+		return "rat"
+	}
 	return "Unknown"
 }

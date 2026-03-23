@@ -3,6 +3,7 @@ package game
 import (
 	"fmt"
 	"math/rand"
+	"time"
 
 	"github.com/Priske/ProjectS/assets"
 	"github.com/Priske/ProjectS/internal/core"
@@ -23,6 +24,7 @@ type Game struct {
 	players    []*core.Player //all players in a given game
 	localSlot  int            // who is logged in on this machine
 	turnSlot   int            // whose turn it is in the match
+	run        core.RunState
 
 	mouseWasDown bool // simple click edge-detect
 }
@@ -179,6 +181,15 @@ func (g *Game) InitializeNewGame(localPlayerID int) {
 	g.SetPhase(PhaseMenu)
 	fmt.Printf("players made: local=%d opponent=%d\n", local.Playerid, opponent.Playerid)
 }
+func (g *Game) StartNewRun() {
+	player := g.LocalPlayer()
+	player.Units = g.InitializeStartingUnits(player.Playerid)
+
+	g.run = core.RunState{
+		EncounterIndex: 0,
+		Seed:           time.Now().UnixNano(),
+	}
+}
 
 func (g *Game) InitializeStartingUnits(playerId int) []*core.Unit {
 	return []*core.Unit{
@@ -188,10 +199,40 @@ func (g *Game) InitializeStartingUnits(playerId int) []*core.Unit {
 	}
 }
 func (g *Game) InitializeStartingUnitsEnemy(playerId int) []*core.Unit {
-	return []*core.Unit{
-		core.MakeNewEnemyCultistKnife(playerId, g.NewUnitID()),
-		core.MakeNewEnemyCultistKnife(playerId, g.NewUnitID()),
-		core.MakeNewEnemyCultistKnife(playerId, g.NewUnitID()),
-		core.MakeNewEnemyCultistLord(playerId, g.NewUnitID()),
+	return g.GenerateEncounterEnemies(playerId)
+}
+
+func (g *Game) GenerateEncounterEnemies(playerId int) []*core.Unit {
+	switch g.run.EncounterIndex {
+	case 0:
+		return []*core.Unit{
+			core.MakeNewEnemyCultistKnife(playerId, g.NewUnitID()),
+			core.MakeNewEnemyCultistKnife(playerId, g.NewUnitID()),
+			core.MakeNewEnemyCultistLord(playerId, g.NewUnitID()),
+		}
+	case 1:
+		return []*core.Unit{
+			core.MakeNewEnemyCultistKnife(playerId, g.NewUnitID()),
+			core.MakeNewEnemyCultistKnife(playerId, g.NewUnitID()),
+			core.MakeNewEnemyCultistKnife(playerId, g.NewUnitID()),
+			core.MakeNewEnemyCultistLord(playerId, g.NewUnitID()),
+		}
+	case 2:
+		return []*core.Unit{
+			core.MakeNewEnemyRatKnife(playerId, g.NewUnitID()),
+			core.MakeNewEnemyRatKnife(playerId, g.NewUnitID()),
+			core.MakeNewEnemyRatKnife(playerId, g.NewUnitID()),
+			core.MakeNewEnemyRatKnife(playerId, g.NewUnitID()),
+			core.MakeNewEnemyRatBroodLord(playerId, g.NewUnitID()),
+		}
 	}
+	return nil
+}
+
+func (g *Game) Run() *core.RunState {
+	return &g.run
+}
+
+func (g *Game) AdvanceEncounter() {
+	g.run.EncounterIndex++
 }

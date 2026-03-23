@@ -9,6 +9,7 @@ type Unit struct {
 	Experience    int
 	Playerid      int
 	CarryLimit    int
+	Defending     bool
 
 	MoveRange            int
 	MoveActionsPerTurn   int
@@ -21,6 +22,7 @@ type Unit struct {
 	BattleStats  BattleStats
 	UnitCategory UnitCategory
 	Actions      []UnitAction
+	AIKind       UnitAIKind
 }
 type BattleStats struct {
 	Kills       int
@@ -50,6 +52,11 @@ const (
 	Razor
 	Enemy_cultist_knife
 	Enemy_cultist_lord
+	Enemy_cultist_shield
+	Enemy_rat_brood_lord
+	Enemy_rat_lord
+	Enemy_rat_knife
+	Enemy_rat_axes
 )
 
 type UnitCategory int
@@ -59,6 +66,13 @@ const (
 	Defense
 	Support
 	Flag
+)
+
+type UnitAIKind int
+
+const (
+	AIKindDefaultAggro UnitAIKind = iota
+	AIKindBroodLord
 )
 
 func (u *Unit) TotalWeight() int {

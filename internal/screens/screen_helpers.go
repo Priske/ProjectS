@@ -175,6 +175,18 @@ func countPlacedPlayerUnits(g core.Game) int {
 
 	return count
 }
+func actionLocksInput(a *core.UnitAction) bool {
+	if a == nil {
+		return false
+	}
+
+	switch a.Kind {
+	case core.ActionSupport, core.ActionSkill:
+		return true
+	}
+
+	return false
+}
 
 func itoa(v int) string {
 	return strconv.Itoa(v)

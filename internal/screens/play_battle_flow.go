@@ -19,10 +19,19 @@ func (ps *PlayScreen) enterBattle(g core.Game) {
 	ps.battle.Selected = nil
 	ps.battle.Log = nil
 
+	ps.spawnCurrentEncounter(g)
+
 	ps.swapAndResetUI(ps.buildBattleUI, g)
-	ps.spawnEnemySetup(g)
 	ps.addBattleLog("Battle started")
 	ps.addBattleLog("Player turn")
+}
+func (ps *PlayScreen) spawnCurrentEncounter(g core.Game) {
+	enemies := g.GenerateEncounterEnemies(-1)
+	if len(enemies) == 0 {
+		return
+	}
+
+	ps.deployEnemiesForEncounter(g, enemies)
 }
 
 func (ps *PlayScreen) endPlayerTurn(g core.Game) {
@@ -58,14 +67,32 @@ func (ps *PlayScreen) updateBattle(g core.Game) {
 		return
 	}
 
+	if ebiten.IsKeyPressed(ebiten.KeyEscape) && actionLocksInput(ps.battle.SelectedAction) {
+		ps.battle.SelectedAction = nil
+		if ps.actionPopup != nil {
+			ps.actionPopup.Open = false
+		}
+		return
+	}
+
 	// Enemy turn runs automatically
 	if ps.battle.Turn.Side == TurnEnemy {
 		ps.runEnemyTurn(g)
 		return
 	}
 
-	// Right click opens action popup
+	// Right click: cancel selected action first, otherwise open popup
+	// Right click: cancel only locked actions first, otherwise open popup
 	if in.RightClicked {
+		if actionLocksInput(ps.battle.SelectedAction) {
+			ps.battle.SelectedAction = nil
+			if ps.actionPopup != nil {
+				ps.actionPopup.Open = false
+			}
+			ps.addBattleLog("Action cancelled")
+			return
+		}
+
 		mx, my := in.MX, in.MY
 		cx, cy, ok := mouseToCell(g, mx, my)
 		if !ok {
@@ -171,17 +198,25 @@ func (ps *PlayScreen) updateBattle(g core.Game) {
 		return
 	}
 
-	// Reselect friendly unit
+	// Support/skill actions lock targeting until used or cancelled
+	// Only locked actions (heal/support/skill) take over left click
+	if actionLocksInput(ps.battle.SelectedAction) {
+		ps.tryUseSelectedAction(g, ps.battle.SelectedAction, cx, cy)
+		return
+	}
+
+	// Friendly click = reselection
 	if clickedUnit != nil && clickedUnit.Playerid == ps.battle.Selected.Playerid {
 		ps.trySelectUnit(g, mx, my)
 		return
 	}
 
-	// Attack enemy using selected action
-	if clickedUnit != nil && clickedUnit.Playerid != ps.battle.Selected.Playerid {
-		if ps.battle.SelectedAction != nil {
-			ps.tryAttackWithSelectedAction(g, ps.battle.SelectedAction, cx, cy)
-		}
+	// Enemy click with attack action
+	if clickedUnit != nil &&
+		clickedUnit.Playerid != ps.battle.Selected.Playerid &&
+		ps.battle.SelectedAction != nil &&
+		ps.battle.SelectedAction.Kind == core.ActionAttack {
+		ps.tryUseSelectedAction(g, ps.battle.SelectedAction, cx, cy)
 		return
 	}
 }

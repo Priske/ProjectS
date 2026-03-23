@@ -37,14 +37,17 @@ func loadDecodedImage(name string) (image.Image, error) {
 func MustLoadAll() core.Assets {
 	return core.Assets{
 		UnitImages: map[core.UnitType]*ebiten.Image{
-			core.Soldier:             mustImage("soldier.png"),
-			core.Commander:           mustImage("commander.png"),
-			core.Medic:               mustImage("medic.png"),
-			core.Shield:              mustImage("shield.png"),
-			core.Sniper:              mustImage("sniper.png"),
-			core.Razor:               mustImage("razor.png"),
-			core.Enemy_cultist_knife: mustTrimmedImage("enemy_cultist_knife.png"),
-			core.Enemy_cultist_lord:  mustTrimmedImage("enemy_cultist_lord.png"),
+			core.Soldier:              mustImage("soldier.png"),
+			core.Commander:            mustImage("commander.png"),
+			core.Medic:                mustImage("medic.png"),
+			core.Shield:               mustImage("shield.png"),
+			core.Sniper:               mustImage("sniper.png"),
+			core.Razor:                mustImage("razor.png"),
+			core.Enemy_cultist_knife:  mustTrimmedImage("enemy_cultist_knife.png"),
+			core.Enemy_cultist_lord:   mustTrimmedImage("enemy_cultist_lord.png"),
+			core.Enemy_cultist_shield: mustTrimmedImage("enemy_cultist_shield.png"),
+			core.Enemy_rat_knife:      mustTrimmedImage("enemy_rat_knife.png"),
+			core.Enemy_rat_brood_lord: mustTrimmedImage("enemy_rat_brood_lord.png"),
 		},
 		CategoryImages: map[core.UnitCategory]*ebiten.Image{
 			core.Attack:  mustTrimmedImage("attack.png"),
@@ -92,6 +95,9 @@ func MustLoadAll() core.Assets {
 		FrameTemplate:   mustTrimmedImage("frame_template.png"),
 		ChestButtonIcon: mustTrimmedImage("chest_shop.png"),
 		ShopButtonIcon:  mustTrimmedImage("shop_shop.png"),
+		Crosshair:       mustTrimmedImage("crosshair.png"),
+		HealCrosshair:   mustTrimmedImage("heal_crosshair.png"),
+		DefendCrosshair: mustTrimmedImage("defend_crosshair.png"),
 	}
 }
 func mustTrimmedImage(name string) *ebiten.Image {

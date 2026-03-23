@@ -24,6 +24,7 @@ func (ps *PlayScreen) canUseAction(u *core.Unit, a *core.UnitAction) bool {
 	if u == nil || a == nil {
 		return false
 	}
+
 	if ps.battle.Turn.Side != TurnPlayer {
 		return false
 	}
@@ -33,12 +34,9 @@ func (ps *PlayScreen) canUseAction(u *core.Unit, a *core.UnitAction) bool {
 		return ps.battle.Turn.CanMove(u) &&
 			ps.battle.Turn.CanUseNamedAction(u, a.ID, a.UsesPerTurn)
 
-	case core.ActionAttack:
-		return ps.battle.Turn.CanAttack(u) &&
+	case core.ActionAttack, core.ActionSkill, core.ActionSupport, core.ActionWait:
+		return ps.battle.Turn.CanUseTurnAction(u) &&
 			ps.battle.Turn.CanUseNamedAction(u, a.ID, a.UsesPerTurn)
-
-	case core.ActionSkill, core.ActionSupport, core.ActionWait:
-		return ps.battle.Turn.CanUseNamedAction(u, a.ID, a.UsesPerTurn)
 	}
 
 	return false
